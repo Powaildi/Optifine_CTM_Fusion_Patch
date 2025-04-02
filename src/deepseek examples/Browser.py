@@ -10,7 +10,7 @@ root.withdraw()
 selected_folder = filedialog.askdirectory(title="请选择文件夹")
 
 if not selected_folder:
-    print("未选择文件夹")
+    print(type(selected_folder))
 else:
     print(f"所选文件夹中的文件列表：")
     # 遍历文件夹及其子文件夹
