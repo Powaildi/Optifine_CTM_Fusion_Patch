@@ -48,6 +48,10 @@ map_vertical = (3,0,1,2)
 'method=vertical+horizontal -> 无对应'
 map_vh = ()
 
+'method=vertical嵌套horizontal -> "layout": "simple"'
+map_simple = ()
+
+
 'method=repeat -> "type": "continuous"'
 'width -> "columns"'
 'height -> "rows"'
