@@ -1,11 +1,11 @@
-import functions.BrowserOperation as b
+import functions.FolderOperation as f
 
 def run():
-    folderpath = b.selectfolder()
+    folderpath = f.selectfolder()
     if folderpath == -1:
         print("未选择文件夹，将会退出")
         return
-    patchpath = b.createpatchfolder(folderpath)
+    patchpath = f.createpatchfolder(folderpath)
 
 
 

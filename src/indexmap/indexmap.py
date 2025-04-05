@@ -8,9 +8,9 @@
         matchTiles=acacia_planks
         faces=top bottom
         method=repeat
-        tiles=0-3
-        width=2
-        height=2
+        tiles='0''-3'
+        width='2'
+        height='2'
     这些文件周围会有数个散落的数字命名的图片
 
     Fusion格式：
@@ -18,8 +18,8 @@
     {
         "fusion": {
             "type": "continuous",
-            "rows": 2,
-            "columns": 3
+            "rows": '2',
+            "columns": '3'
         }
     }
     这些文件周围会有对应的一张图
@@ -29,26 +29,35 @@
     Optifine -> Fusion
     使用的时候，参考底下的测试代码。
     这一脚本只适合比较乖巧的，不进行ctm嵌套的整合包
-    像水野工艺这种材质包里就会出现tiles=1 1 4 4 和 matchTiles=./1.png的情况，暂不解决
+    像水野工艺这种材质包里就会出现tiles='1' '1' '4' '4' 和 matchTiles=./'1.'png的情况，暂不解决
+    受到正则表达式影响，一些字符串内的数字也上了引号，它们不应该存在
 """
 
 'method=ctm -> "layout": "full"'
-map_full = ()
+map_full = ('0','1','2','3','4','5','6','7',
+            '12','13','14','15','16','17','18','19',
+            '24','25','26','27','30','31','28','29',
+            '36','37','38','39','42','43','40','41',
+            '34','46','23','22','9','21','32','33',
+            '35',False,'11','10','8','20','44','45')
 
 'ctm_compact -> "layout": "pieced"'
 '完全一致'
-map_pieced = (0,1.2,3,4)
+map_pieced = ('0','1.2','3','4')
 
 'method=horizontal -> '
-map_horizonal = (3,0,1,2)
+map_horizonal = ('3','0','1','2')
 
 'method=vertical -> '
-map_vertical = (3,0,1,2)
+map_vertical = ('3','0','1','2')
 
-'method=vertical+horizontal -> 无对应'
+'method=vertical+horizontal -> 无对应 -> "layout": "full"'
 map_vh = ()
 
-'method=vertical嵌套horizontal -> "layout": "simple"'
+'method=horizontal+vertical -> 无对应 -> "layout": "full"'
+map_hv = ()
+
+'method=vertical嵌套horizontal -> 无对应 -> "layout": "simple"'
 map_simple = ()
 
 
@@ -59,7 +68,9 @@ map_simple = ()
 
 'method=overlay -> '
 '需要fusion/model_modifiers/xxx,json'
-map_overlay = ()
+map_overlay = ('0','1','2','3','5','4',
+               '7',False,'9','12','8','6',
+               '14','15','16','10','13','11')
 
 'method=random -> "type": "random"'
 '含"rows" "columns"'
@@ -72,4 +83,7 @@ map_overlay = ()
 
 
 if __name__ == "__main__":
-    pass
+    for i in map_full:
+        if i == False:
+            print("False")
+    print(map_full)
