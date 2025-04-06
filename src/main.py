@@ -1,4 +1,5 @@
 import functions.FolderOperation as f
+from indexmap.indexmap import *
 
 def run():
     folderpath = f.selectfolder()

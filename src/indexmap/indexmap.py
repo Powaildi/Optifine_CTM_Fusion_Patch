@@ -43,7 +43,7 @@ map_full = ('0','1','2','3','4','5','6','7',
 
 'ctm_compact -> "layout": "pieced"'
 '完全一致'
-map_pieced = ('0','1.2','3','4')
+map_pieced = ('0','1','2','3','4')
 
 'method=horizontal -> '
 map_horizonal = ('3','0','1','2')
@@ -52,21 +52,31 @@ map_horizonal = ('3','0','1','2')
 map_vertical = ('3','0','1','2')
 
 'method=vertical+horizontal -> 无对应 -> "layout": "full"'
-map_vh = ()
+map_vh = ('3','4','5','6','2','2','1','2',
+          '2','2','2','2','0','0','0','1',
+          '1','1','1','1','1','2','1','2',
+          '0','0','0','0','0','1','0','1',
+          '1','1','1','1','1','1','1','1',
+          '1',False,'1','1','1','1','1','1')
 
 'method=horizontal+vertical -> 无对应 -> "layout": "full"'
-map_hv = ()
+map_hv = ('0','0','1','2','0','2','0','1',
+          '6','0','1','2','0','2','1','2',
+          '5','0','1','2','0','1','0','1',
+          '4','0','1','2','1','2','1','2',
+          '1','1','1','1','1','1','1','1',
+          '1',False,'1','1','1','1','1','1')
 
 'method=vertical嵌套horizontal -> 无对应 -> "layout": "simple"'
 map_simple = ()
 
 
 'method=repeat -> "type": "continuous"'
-'width -> "columns"'
-'height -> "rows"'
+'width -> "columns" -> 列'
+'height -> "rows" -> 行'
 #不需要
 
-'method=overlay -> '
+'method=overlay -> "layout": "overlay"'
 '需要fusion/model_modifiers/xxx,json'
 map_overlay = ('0','1','2','3','5','4',
                '7',False,'9','12','8','6',
