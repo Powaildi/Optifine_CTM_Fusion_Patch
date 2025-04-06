@@ -88,6 +88,13 @@ class pngmcmeta:
                 return {"fusion":{"type":self.type,"rows":self.rows,"columns":self.columns}}
         return
         
+#生成Fusion专属的Block modifier，用于Overlay。位于 assets/minecraft/fusion/model_modifiers/blocks
+class blockmodifier:
+    def __init__(self,targets:list,mcpath:str):
+        self.targets = targets
+        self.mcpath = [mcpath]
+    def generatedict(self):
+        return {"targets":self.targets,"append":self.mcpath}
 """ 
 保留备用
 class pngmcmeta:
