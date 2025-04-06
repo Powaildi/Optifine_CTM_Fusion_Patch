@@ -1,12 +1,18 @@
+import os
+from pathlib import Path
 import functions.FolderOperation as f
 from indexmap.indexmap import *
 
 def run():
     folderpath = f.selectfolder()
-    if folderpath == -1:
+    if not folderpath:
         print("未选择文件夹，将会退出")
         return
     patchpath = f.createpatchfolder(folderpath)
+    referencepath = f.selectfolder("请选择你亲自解压提取的Minecraft资源文件夹(assets)")
+    if not referencepath:
+        print("未选择文件夹，将会退出")
+        return
 
 
 

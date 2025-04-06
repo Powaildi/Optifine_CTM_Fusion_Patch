@@ -40,15 +40,16 @@ map_full = ('0','1','2','3','4','5','6','7',
             '36','37','38','39','42','43','40','41',
             '34','46','23','22','9','21','32','33',
             '35',False,'11','10','8','20','44','45')
+#False位置将会在另一个文件处利用来生成空位
 
 'ctm_compact -> "layout": "pieced"'
 '完全一致'
 map_pieced = ('0','1','2','3','4')
 
-'method=horizontal -> '
+'method=horizontal -> "layout": "horizontal"'
 map_horizonal = ('3','0','1','2')
 
-'method=vertical -> '
+'method=vertical -> "layout": "vertical"'
 map_vertical = ('3','0','1','2')
 
 'method=vertical+horizontal -> 无对应 -> "layout": "full"'
