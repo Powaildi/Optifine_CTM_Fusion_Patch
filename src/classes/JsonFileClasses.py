@@ -78,7 +78,7 @@ class pngmcmeta:
         self.rows = rows
         self.columns = columns
     def generatedict(self):
-        #以下列出了所有可能的”type“的值。虽然说其实只要一个if else，但是为了可读性还是这么干了
+        #以下列出了所有可能的”type“的值。
         match self.type:
             case "connecting":
                 return {"fusion":{"type":self.type,"layout":self.layout}}
@@ -86,6 +86,9 @@ class pngmcmeta:
                 return {"fusion":{"type":self.type,"rows":self.rows,"columns":self.columns}}
             case "random":
                 return {"fusion":{"type":self.type,"rows":self.rows,"columns":self.columns}}
+            case "fixed":
+                #真的会有人用这个吗
+                pass
         return
         
 #生成Fusion专属的Block modifier，用于Overlay。位于 assets/minecraft/fusion/model_modifiers/blocks

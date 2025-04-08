@@ -8,11 +8,14 @@ def run():
     if not folderpath:
         print("未选择文件夹，将会退出")
         return
-    patchpath = f.createpatchfolder(folderpath)
+    
     referencepath = f.selectfolder("请选择你亲自解压提取的Minecraft资源文件夹(assets)")
     if not referencepath:
         print("未选择文件夹，将会退出")
         return
+    
+    patchpath = f.createpatchfolder(folderpath)
+    
 
 
 
