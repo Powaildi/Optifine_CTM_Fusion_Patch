@@ -6,7 +6,7 @@ class packmcmeta:
         self.mcversion = mcversion
         self.description =f"From {packname}"
         self.fusionversion = fusionversion
-    def generatedict(self):
+    def generatedict(self) -> dict[str,str]:
         return {"pack":{"pack_format":self.mcversion,"description":self.description},"fusion":{"min_version":self.fusionversion}}
 
 
@@ -38,7 +38,7 @@ class blockmodel:
         self.side = side
         self.bottom =bottom
 
-    def generatedict(self,islog:bool=False):
+    def generatedict(self,islog:bool=False) -> dict[str,str]:
         if not self.reference:
             return
         #加入Fusion识别的部分
@@ -77,7 +77,7 @@ class pngmcmeta:
         #以下两个接受整数1~10，超过这个范围此程序不会报错，但是Fusion可能会出错
         self.rows = rows
         self.columns = columns
-    def generatedict(self):
+    def generatedict(self) -> dict[str,str]:
         #以下列出了所有可能的”type“的值。
         match self.type:
             case "connecting":
@@ -96,14 +96,14 @@ class blockmodifier:
     def __init__(self,targets:list,mcpath:str):
         self.targets = targets
         self.mcpath = [mcpath]
-    def generatedict(self):
+    def generatedict(self) -> dict[str,str]:
         return {"targets":self.targets,"append":self.mcpath}
 """ 
 保留备用
 class pngmcmeta:
     def __init__(self):
         pass
-    def generatedict(self):
+    def generatedict(self) -> dict[str,str]:
         return
  """
 

@@ -2,6 +2,8 @@ import tkinter as tk
 from tkinter import filedialog
 from pathlib import Path
 
+#这些函数可能只会使用1次
+
 #选择文件夹，返回路径对象
 def selectfolder(title:str="请选择解压后的资源包文件夹") -> Path:
 # 创建隐藏的Tkinter窗口
@@ -30,34 +32,38 @@ def createpatchfolder(path:Path) -> Path:
     except Exception as e:
         print(f"操作失败：{str(e)}")
 
-#从路径中寻找ctm文件夹，返回ctm文件夹路径对象
-def searchctmfolder(path:Path) -> Path:
-    ctm_folder = path / "assets" / "minecraft" / "optifine" / "ctm"
-    if ctm_folder.exists():
-        return ctm_folder
-    return
-
 # 从路径中寻找某一后缀的文件
-def findonetypefiles(folder_path:Path,suffix:str) -> list[Path]:
+def findpropertyfiles(folder_path:Path) -> list[Path]:
     if not folder_path.is_dir():
         raise ValueError(f"路径无效或不是文件夹：{folder_path}")
     # 使用rglob递归查找（**表示递归通配）
-    return list(folder_path.rglob(f"*.{suffix}"))
+    return list(folder_path.rglob("*/minecraft/optifine/ctm/**/*.properties"))
     
+def findmodelfiles(folder_path:Path) -> dict[str:list]:
+    if not folder_path.is_dir():
+        raise ValueError(f"路径无效或不是文件夹：{folder_path}")
+    
+    dict = {"namespaces":[],"modelnames":[],"modelpaths":[]}
+    #寻找方块模型文件夹
+    modelfolders = folder_path.rglob("*/models/block")#生成器
+    for m in modelfolders:
+        #生成mc和所有模组的命名空间
+        dict["namespaces"].append(m.parent.parent.name)
+        modelfiles = m.rglob("*.json")
+        for f in modelfiles:
+            #生成名称，如minecraft:dirt
+            #这里将会和matchBlocks对接！
+            dict["modelnames"].append(f"{m.parent.parent.name}:{f.name.split(".")[0]}")
+            #生成路径
+            dict["modelpaths"].append(f)
+
+    return dict
 
 
 
 
 if __name__ == "__main__":
-    a = selectfolder()
-    if not a:
-        print("未选择文件夹，将会退出")
-    else:
-        b = searchctmfolder(a)
-        c = findonetypefiles(b,"properties")
-        d = c[24]
-        t = d.open("r").read()
-        print(d.name)
-        print(t)
+    moddedpack = Path(r"E:\[1.20]Minecraft\.minecraft\versions\1.20.1-NeoForge_test\resourcepacks\Stay True Compats v7 [1.19]")
+    print(findmodelfiles(moddedpack))
         
 

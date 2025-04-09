@@ -1,8 +1,4 @@
-import json
 from pathlib import Path
-
-
-
 
 def readproperties(filepath:Path) -> dict:
     f = filepath.open("r")
@@ -76,5 +72,5 @@ def readproperties(filepath:Path) -> dict:
 if __name__ == "__main__":
     p1 = Path(r"E:\[1.20]Minecraft\.minecraft\versions\1.20.1-NeoForge_test\resourcepacks\Stay_True_1.20\assets\minecraft\optifine\ctm\glass\aregular\glass.properties")
     p2 = Path(r"E:\[1.20]Minecraft\.minecraft\versions\1.20.1-NeoForge_test\resourcepacks\Stay_True_1.20\assets\minecraft\optifine\ctm\_overlays\moss_block\moss_block.properties")
-    t = readproperties(p1)
+    t = readproperties(p2)
     print(t)
