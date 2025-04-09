@@ -2,9 +2,17 @@ import os
 import json
 import shutil
 from pathlib import Path
-import functions.FolderOperation as f
 import classes.JsonFileClasses as c
-from indexmap.indexmap import *
+import functions.FolderOperation as f
+import functions.ReadFile as r
+from functions.CreateStitchedTexture import *
+
+def addnamespace(name:str):
+    if ":" in name:
+        return name
+    else:
+        return "minecraft:"+name
+
 
 def run(usetest:bool=False):
     if usetest:
@@ -39,12 +47,24 @@ def run(usetest:bool=False):
     
     #收集文件数据
     propertyfiles = f.findpropertyfiles(originalpath)
-    modelfiles = []
-    blocklist = [x.name for x in modelfiles]
-    print(propertyfiles)
+    blocks = f.findmodelfiles(originalpath)
+    blocks = f.findmodelfiles(referencepath,blocks)
 
     #创建文件夹
-    
+    temp = patchpath / "assets"
+    temp.mkdir(exist_ok=True)
+    for i in blocks["namespaces"]:
+        temp2 = temp / f"{i}" / "models" / "blocks"
+        temp2.mkdir(parents=True,exist_ok=True)
+        temp3 = temp / f"{i}" / "textures" / "blocks"
+        temp3.mkdir(parents=True,exist_ok=True)
+    del temp,temp2,temp3
+
+    #创建文件
+    for pfile in propertyfiles:
+        temp = r.readproperties(pfile)
+        print(temp)
+
 
 
 

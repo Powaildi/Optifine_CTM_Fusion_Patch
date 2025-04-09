@@ -34,8 +34,10 @@ def readproperties(filepath:Path) -> dict:
                         #变成数字
                         n1 = eval(n1)
                         n2 = eval(n2)
-                        for i in range(n1,n2,1):
-                            temp.append(i)
+                        for i in range(n1,n2+1,1):
+                            #range只会生成到n2-1，要+1才行
+                            #底下的n是str类型，i也得是
+                            temp.append(str(i))
                     else:
                         temp.append(n)
                 d["tiles"] = temp

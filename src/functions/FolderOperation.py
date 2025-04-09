@@ -39,23 +39,43 @@ def findpropertyfiles(folder_path:Path) -> list[Path]:
     # 使用rglob递归查找（**表示递归通配）
     return list(folder_path.rglob("*/minecraft/optifine/ctm/**/*.properties"))
     
-def findmodelfiles(folder_path:Path) -> dict[str:list]:
+def findmodelfiles(folder_path:Path,dict:dict={"namespaces":[],"modelnames":[],"modelpaths":[]}) -> dict[str:list]:
     if not folder_path.is_dir():
         raise ValueError(f"路径无效或不是文件夹：{folder_path}")
     
-    dict = {"namespaces":[],"modelnames":[],"modelpaths":[]}
-    #寻找方块模型文件夹
-    modelfolders = folder_path.rglob("*/models/block")#生成器
-    for m in modelfolders:
-        #生成mc和所有模组的命名空间
-        dict["namespaces"].append(m.parent.parent.name)
-        modelfiles = m.rglob("*.json")
-        for f in modelfiles:
-            #生成名称，如minecraft:dirt
-            #这里将会和matchBlocks对接！
-            dict["modelnames"].append(f"{m.parent.parent.name}:{f.name.split(".")[0]}")
-            #生成路径
-            dict["modelpaths"].append(f)
+    if dict == {"namespaces":[],"modelnames":[],"modelpaths":[]}:
+        #第一次使用，dict为默认值
+        #寻找方块模型文件夹
+        modelfolders = folder_path.rglob("*/models/block")#生成器
+        for m in modelfolders:
+            #生成mc和所有模组的命名空间
+            dict["namespaces"].append(m.parent.parent.name)
+            modelfiles = m.rglob("*.json")
+            for f in modelfiles:
+                #生成名称，如minecraft:dirt
+                #这里将会和matchBlocks对接！
+                dict["modelnames"].append(f"{m.parent.parent.name}:{f.name.split(".")[0]}")
+                #生成路径
+                dict["modelpaths"].append(f)
+    else:
+        #第二次以后使用，补充元素
+        modelfolders = folder_path.rglob("*/models/block")#生成器
+        for m in modelfolders:
+            #查找元素，有就不干，没有就添加
+            if m.parent.parent.name in dict["namespaces"]:
+                pass
+            else:
+                dict["namespaces"].append(m.parent.parent.name)
+            
+            modelfiles = m.rglob("*.json")
+            for f in modelfiles:
+                name = f"{m.parent.parent.name}:{f.name.split(".")[0]}"
+                if name in dict["modelnames"]:
+                    pass
+                else:
+                    dict["modelnames"].append(name)
+                    dict["modelpaths"].append(f)
+                
 
     return dict
 
@@ -63,7 +83,14 @@ def findmodelfiles(folder_path:Path) -> dict[str:list]:
 
 
 if __name__ == "__main__":
+    reference = Path(r"E:\[1.20]Minecraft\.minecraft\versions\1.20.1-NeoForge_test\resourcepacks\assets")
     moddedpack = Path(r"E:\[1.20]Minecraft\.minecraft\versions\1.20.1-NeoForge_test\resourcepacks\Stay True Compats v7 [1.19]")
-    print(findmodelfiles(moddedpack))
+    dict = findmodelfiles(moddedpack)
+    dict2 = findmodelfiles(reference,dict)
+    #这个操作是没有意义的，因为dict和dict2是指向同一个dict的（相当于指针）
+    n1 = dict["modelnames"].index("minecraft:cut_red_sandstone")
+    n2 = dict2["modelnames"].index("minecraft:cut_red_sandstone")
+    print(dict["modelpaths"][n1])
+    print(dict2["modelpaths"][n2])
         
 

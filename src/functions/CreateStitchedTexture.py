@@ -88,9 +88,18 @@ map_overlay = ('0','1','2','3','5','4',
 '值得注意的是，有些随机是mc原生的，参考沙子随机旋转，Stay True的随机就是这种'
 #不需要
 
+from PIL import Image
+from pathlib import Path
 
-
-
+#与上面的强耦合，也和ReadFile有点关系
+def mapping(tiles:list,map:tuple):
+    newlist = []
+    for i in map:
+        if i:
+            newlist.append(tiles[eval[i]])
+        else:
+            newlist.append(False)
+    return newlist
 
 
 if __name__ == "__main__":
