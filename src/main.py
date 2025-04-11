@@ -1,20 +1,26 @@
-import os
 import json
 import shutil
 from pathlib import Path
+from PIL import Image
 import classes.JsonFileClasses as c
 import functions.FolderOperation as f
 import functions.ReadFile as r
-from functions.CreateStitchedTexture import *
+import functions.CreateStitchedTexture as s
 
 def addnamespace(name:str):
+    """ 为没有"minecraft:"的方块加入这个默认命名空间 """
     if ":" in name:
         return name
     else:
         return "minecraft:"+name
 
 
+def createfiles(propertyfile:Path, patchpath:Path):
+    """ 核心组件的集合体，为一个property文件创建Fusion对应的三个文件 """
+    pass
+
 def run(usetest:bool=False):
+    """ 主函数 """
     if usetest:
         originalpath = Path(r"E:\[1.20]Minecraft\.minecraft\versions\1.20.1-NeoForge_test\resourcepacks\Stay_True_1.20")
         referencepath = Path(r"E:\[1.20]Minecraft\.minecraft\versions\1.20.1-NeoForge_test\resourcepacks\assets")

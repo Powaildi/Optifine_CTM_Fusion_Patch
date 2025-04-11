@@ -1,7 +1,8 @@
 
 
-#通过这些写入一个pack.mcmeta，里面的版本仅供参考
+
 class packmcmeta:
+    """ 通过这些写入一个pack.mcmeta，Fusion的版本仅供参考 """
     def __init__(self,mcversion:int=15,fusionversion:str='1.2.2',packname:str=""):
         self.mcversion = mcversion
         self.description =f"From {packname}"
@@ -23,10 +24,12 @@ Fusion版本一般随便填，建议1.2.0往上
 NeoForge 1.20.1的Fusion只有1.1.1，试试Forge版
 """
 
-#方块模型文件，会生成能被Fusion识别的形式 xxx.json
-"这一部分涉及到mc的方块类型等复杂因素，现在的做法将会导致很多的不兼容问题，必须提供原始xxx.json"
-"有时候会出现一个方块根据不同状态有多个json的情形，比如原木，构思Mojang给樱花木和别的原木不一样的模型父类，一个就有4个json文件，我不明白是怎么想的"
+
 class blockmodel:
+    """ 
+    方块模型文件，会生成能被Fusion识别的形式 xxx.json
+    这一部分涉及到mc的方块类型等复杂因素，现在的做法将会导致很多的不兼容问题，必须提供原始方块模型文件
+    """
     def __init__(self,reference:dict={},type:str="base",all:str="",top:str="",side:str="",bottom:str=""):
         #原来的block.json，必须有
         self.reference = reference
@@ -69,8 +72,9 @@ class blockmodel:
         
         return self.reference
 
-#对缝合到一起的数个贴图的png图片的外部数据文件 xxx.png.mcmeta
+
 class pngmcmeta:
+    """ 对缝合到一起的数个贴图的png图片的外部数据文件 xxx.png.mcmeta """
     def __init__(self,type:str="connecting",layout:str="full",rows:int=1,columns:int=1):
         self.type = type
         self.layout = layout
@@ -91,8 +95,9 @@ class pngmcmeta:
                 pass
         return
         
-#生成Fusion专属的Block modifier，用于Overlay。位于 assets/minecraft/fusion/model_modifiers/blocks
+
 class blockmodifier:
+    """ 生成Fusion专属的Block modifier，用于Overlay。位于 assets/minecraft/fusion/model_modifiers/blocks """
     def __init__(self,targets:list,mcpath:str):
         self.targets = targets
         self.mcpath = [mcpath]

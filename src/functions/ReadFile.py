@@ -1,6 +1,7 @@
 from pathlib import Path
 
 def readproperties(filepath:Path) -> dict:
+    """ 核心组件之一，读取xxx.properties，返回一个具有特定内容的字典，这个字典将会在另外的函数中使用 """
     f = filepath.open("r")
     text=f.read()
     f.close()
@@ -48,7 +49,7 @@ def readproperties(filepath:Path) -> dict:
             case "width":
                 d["width"] = e[1]
             case "height":
-                d["heigh"] = e[1]
+                d["height"] = e[1]
             
             
             case "tintIndex":
