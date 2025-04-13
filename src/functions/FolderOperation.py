@@ -40,6 +40,7 @@ def findpropertyfiles(folder_path:Path) -> list[Path]:
     return list(folder_path.rglob("*/minecraft/optifine/ctm/**/*.properties"))
     
 def findmodelfiles(folder_path:Path,dict:dict={"namespaces":[],"modelnames":[],"modelpaths":[]}) -> dict[str:list]:
+    """ 核心组件之一，创建一个包含了所有方块模型文件的字典 """
     if not folder_path.is_dir():
         raise ValueError(f"路径无效或不是文件夹：{folder_path}")
     

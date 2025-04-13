@@ -50,7 +50,10 @@ map_pieced = ('0','1','2','3','4')
 map_horizontal = ('3','0','1','2')
 
 'method=vertical -> "layout": "vertical"'
-map_vertical = ('3','0','1','2')
+map_vertical = ('3',
+                '2',
+                '1',
+                '0')
 
 'method=vertical+horizontal -> 无对应 -> "layout": "full"'
 map_vh = ('3','4','5','6','2','2','1','2',
@@ -118,10 +121,13 @@ def matchmethodmapping(method:str,tiles:list):
         case "horizontal+vertical":
             return "full",mapping(tiles,map_hv)
         case "repeat":
+            #这个continuous在layout中并不存在，而是 "type": "continuous"
             return "continuous",tiles
         case "overlay":
+            print("matched overlay")
             return "overlay",mapping(tiles,map_overlay)
         case "random":
+             #这个random在layout中并不存在，而是 "type": "random"
             return "random",tiles
 
 def getpicturepath(propertypath:Path,tiles:list) ->list :
@@ -171,7 +177,7 @@ def mergetexture(picturepaths:list[Path],width:int,height:int):
         x = col * tile_width
         y = row * tile_height
         
-        # 获取对应图片或透明块
+        # 获取对应图片或透明块，在此报错请到201行
         if images[index]:
             img = images[index]
         else:
@@ -182,7 +188,8 @@ def mergetexture(picturepaths:list[Path],width:int,height:int):
 
 #与上面的强耦合，也和ReadFile有点关系
 def createstitchedtexture(propertypath:Path,propertydict:dict):
-    """ 核心组件之一，创建一大板的图片，返回这个图片，需要在另外的代码中写入文件 """
+    """ 核心组件之一，创建一大板的图片，返回这个图片，需要在另外的代码中写入文件 
+        返回layout,width,height,picture,normal,specular"""
     #必需属性，没有就报错
     method = propertydict["method"]
     tiles = propertydict["tiles"]
@@ -195,21 +202,22 @@ def createstitchedtexture(propertypath:Path,propertydict:dict):
     layout,tiles = matchmethodmapping(method,tiles)
     #再次确定宽高
     match layout:
+        #要从Fusion官方文档查找，数据不对会在此文件的178行报错IndexError: list index out of range
         case "full":
             width = 8
             height = 6
         case "pieced":
-            width = 8
-            height = 6
+            width = 5
+            height = 1
         case "horizontal":
-            width = 8
-            height = 6
+            width = 4
+            height = 1
         case "vertical":
-            width = 8
-            height = 6
+            width = 1
+            height = 4
         case "overlay":
-            width = 8
-            height = 6
+            width = 6
+            height = 3
         #以下使用可选属性，它们已经在上面赋值过了
         case "continuous":
             pass
@@ -218,7 +226,7 @@ def createstitchedtexture(propertypath:Path,propertydict:dict):
     
     #获取文件路径
     picturepaths = getpicturepath(propertypath,tiles)
-
+    #法线贴图和高光贴图还没有测试
     tiles_n = []
     tiles_s = []
     for i in tiles:
@@ -230,6 +238,7 @@ def createstitchedtexture(propertypath:Path,propertydict:dict):
             tiles_s.append(False)
     normalpaths = getpicturepath(propertypath,tiles_n)
     specularpaths = getpicturepath(propertypath,tiles_s)
+    
 
     picture = mergetexture(picturepaths,width,height)
     normal = mergetexture(normalpaths,width,height)
@@ -238,7 +247,7 @@ def createstitchedtexture(propertypath:Path,propertydict:dict):
     if not picture:
         raise FileNotFoundError(f"从{propertypath.name}创建基本缝合图像的图片缺失")
     
-    return layout,picture,normal,specular
+    return layout,width,height,picture,normal,specular
 
 
 
@@ -247,6 +256,7 @@ if __name__ == "__main__":
     import ReadFile as r
     propertypath = Path(r"E:\[1.20]Minecraft\.minecraft\versions\1.20.1-NeoForge_test\resourcepacks\Stay_True_1.20\assets\minecraft\optifine\ctm\glass\aregular\glass.properties")
     dict = r.readproperties(propertypath)
-    layout,picture,normal,specular = createstitchedtexture(propertypath,dict)
+    layout,width,height,picture,normal,specular = createstitchedtexture(propertypath,dict)
+    print(propertypath.resolve())
     picture.save("merged.png")
     print(normal)

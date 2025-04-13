@@ -32,16 +32,28 @@ class blockmodel:
     """
     def __init__(self,reference:dict={},type:str="base",all:str="",top:str="",side:str="",bottom:str=""):
         #原来的block.json，必须有
-        self.reference = reference
+        self.reference = reference.copy()
         #连接的为connecting，随机和大块连续的为base
         self.type = type
         #以下是改变的贴图路径，只接受mc格式路径： "<命名空间>:<路径>"  将会指向 assets/<命名空间>/textures/<路径>.png
         self.all = all
         self.top = top
         self.side = side
-        self.bottom =bottom
+        self.bottom = bottom
+
+    def addcontent(self,faces:str,mcpath:str):
+        match faces:
+            case "all":
+                self.all = mcpath
+            case "top":
+                self.top = mcpath
+            case "side":
+                self.side = mcpath
+            case "bottom":
+                self.bottom = mcpath
 
     def generatedict(self,islog:bool=False) -> dict[str,str]:
+
         if not self.reference:
             return
         #加入Fusion识别的部分
@@ -58,42 +70,71 @@ class blockmodel:
         if self.top:
             if self.reference["textures"].get("top",False):
                 self.reference["textures"]["top"] = self.top
-            if self.reference["textures"].get("end",False):
+            #原木特化
+            elif self.reference["textures"].get("end",False):
                 self.reference["textures"]["end"] = self.top
         #四周
-        if self.side and self.reference["textures"].get("side",False):
-            self.reference["textures"]["side"] = self.side
+        if self.side:
+            if self.reference["textures"].get("side",False):
+                self.reference["textures"]["side"] = self.side
+            #玻璃板特化
+            elif self.reference["textures"].get("pane",False):
+                self.reference["textures"]["side"] = self.side
         #底部
         if self.bottom and self.reference["textures"].get("bottom",False):
             self.reference["textures"]["bottom"] = self.bottom
         #全部，但是并不是真的全部
-        if self.all and self.reference["textures"].get("all",False):
-            self.reference["textures"]["all"] = self.all
+        if self.all:
+            if self.reference["textures"].get("all",False):
+                self.reference["textures"]["all"] = self.all
+            if self.reference["textures"].get("top",False):
+                self.reference["textures"]["top"] = self.all
+            if self.reference["textures"].get("side",False):
+                self.reference["textures"]["side"] = self.all
+            if self.reference["textures"].get("bottom",False):
+                self.reference["textures"]["bottom"] = self.all
         
         return self.reference
 
 
 class pngmcmeta:
     """ 对缝合到一起的数个贴图的png图片的外部数据文件 xxx.png.mcmeta """
-    def __init__(self,type:str="connecting",layout:str="full",rows:int=1,columns:int=1):
-        self.type = type
+    def __init__(self,layout:str="full",rows:int=1,columns:int=1,tinting:str=None):
+        #这里和CreateStitchedTexture的126行左右位置有关系
+        if layout == "continuous":
+            self.type = "continuous"
+        elif layout == "random":
+            self.type = "random"
+        else:
+            self.type = "connecting"
+        
         self.layout = layout
         #以下两个接受整数1~10，超过这个范围此程序不会报错，但是Fusion可能会出错
         self.rows = rows
         self.columns = columns
+        self.tinting = tinting
     def generatedict(self) -> dict[str,str]:
+        dict = {"fusion":{"type":self.type}}
         #以下列出了所有可能的”type“的值。
         match self.type:
             case "connecting":
-                return {"fusion":{"type":self.type,"layout":self.layout}}
+                dict["fusion"]["layout"] = self.layout
             case "continuous":
-                return {"fusion":{"type":self.type,"rows":self.rows,"columns":self.columns}}
+                dict["fusion"]["rows"] = self.rows
+                dict["fusion"]["columns"] = self.columns
             case "random":
-                return {"fusion":{"type":self.type,"rows":self.rows,"columns":self.columns}}
+                dict["fusion"]["rows"] = self.rows
+                dict["fusion"]["columns"] = self.columns
             case "fixed":
-                #真的会有人用这个吗
+                #没有使用的类型
                 pass
-        return
+        #给草染色，但是别的染色类型会被无视（在main.py 58行）
+        #None, "biome_grass", "biome_foliage", "biome_water"
+        
+        if self.tinting:
+            dict["fusion"]["tinting"] = self.tinting
+        
+        return dict
         
 
 class blockmodifier:

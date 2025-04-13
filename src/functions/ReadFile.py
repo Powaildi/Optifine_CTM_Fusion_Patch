@@ -26,7 +26,8 @@ def readproperties(filepath:Path) -> dict:
                 d["connectBlocks"] = e[1].split(" ")
 
             case "method":
-                d["method"] = e[1]
+                #防止带空格了它不认
+                d["method"] = e[1].split(" ")[0]
             case "tiles":
                 temp = []
                 for n in e[1].split(" "):
@@ -42,19 +43,45 @@ def readproperties(filepath:Path) -> dict:
                     else:
                         temp.append(n)
                 d["tiles"] = temp
+            
+            case "faces":
+                #可选属性，在这里没有就会在另外的代码中写all
+                d["faces"] = e[1].split(" ")
             case "weights":
                 #可选属性，出现在random方法中
                 d["weights"] = e[1].split(" ")
 
             case "width":
-                d["width"] = e[1]
+                d["width"] = e[1].split(" ")[0]
             case "height":
-                d["height"] = e[1]
+                d["height"] = e[1].split(" ")[0]
             
             
             case "tintIndex":
                 #可选属性，默认为-1（禁用）
-                d["tintIndex"] = e[1]
+                #为0时，"tinting": "biome_grass"
+                d["tintIndex"] = e[1].split(" ")[0]
+
+
+    #有些属性文件居然没有写方法，很奇怪，这里通过图格数量反推方法
+    if not d.get("method"):
+        if d.get("tiles"):
+            match d["tiles"][-1]:
+                case "16":
+                    #第一个发现此问题的就是用的这个方法
+                    d["method"] = "overlay"
+                case "46":
+                    d["method"] = "ctm"
+                case "3":
+                    d["method"] = "horizontal"
+                case "4":
+                    d["method"] = "ctm_compact"
+        
+        else:
+            #没救了
+            raise ValueError(f"{filepath.resolve()}没有生成连接纹理所需的必要数据，你先把这个文件删了再运行吧.")
+            
+
     return d
 
 """ 
