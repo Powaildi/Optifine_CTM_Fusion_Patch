@@ -30,27 +30,48 @@ class blockmodel:
     方块模型文件，会生成能被Fusion识别的形式 xxx.json
     这一部分涉及到mc的方块类型等复杂因素，现在的做法将会导致很多的不兼容问题，必须提供原始方块模型文件
     """
-    def __init__(self,reference:dict={},type:str="base",all:str="",top:str="",side:str="",bottom:str=""):
+    def __init__(self,reference:dict={},layout:str="full",faces:list[str]=[],mcpath:str=""):
         #原来的block.json，必须有
         self.reference = reference.copy()
         #连接的为connecting，随机和大块连续的为base
-        self.type = type
-        #以下是改变的贴图路径，只接受mc格式路径： "<命名空间>:<路径>"  将会指向 assets/<命名空间>/textures/<路径>.png
-        self.all = all
-        self.top = top
-        self.side = side
-        self.bottom = bottom
+        if layout == "continuous" or layout == "random":
+            self.type = "base"
+        else:
+            self.type = "connecting"
 
-    def addcontent(self,faces:str,mcpath:str):
-        match faces:
-            case "all":
-                self.all = mcpath
-            case "top":
-                self.top = mcpath
-            case "side":
-                self.side = mcpath
-            case "bottom":
-                self.bottom = mcpath
+        #以下是改变的贴图路径，只接受mc格式路径： "<命名空间>:<路径>"  将会指向 assets/<命名空间>/textures/<路径>.png
+        self.all = None
+        self.top = None
+        self.side = None
+        self.bottom = None
+        for face in faces:
+            match face:
+                case "all":
+                    self.all = mcpath
+                case "top":
+                    self.top = mcpath
+                case "sides":
+                    self.side = mcpath
+                case "north":
+                    #四个方向有一个就全判断
+                    self.side = mcpath
+                case "bottom":
+                    self.bottom = mcpath
+
+    def addcontent(self,faces:list[str],mcpath:str):
+        for face in faces:
+            match face:
+                case "all":
+                    self.all = mcpath
+                case "top":
+                    self.top = mcpath
+                case "sides":
+                    self.side = mcpath
+                case "north":
+                    #四个方向有一个就全判断
+                    self.side = mcpath
+                case "bottom":
+                    self.bottom = mcpath
 
     def generatedict(self,islog:bool=False) -> dict[str,str]:
 

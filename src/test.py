@@ -8,8 +8,16 @@ for i in generator:
 list = [0,1,2,3,4,5,6]
 
 def add(list):
-    for i in range(7):
+    for i in range(len(list)):
         list[i] += 1
 
 add(list)
 print(list)
+
+dict = {"a":[1,2,3],"b":[4,5,6]}
+a = dict.get("a")
+b = dict["b"]
+add(a)
+add(b)
+
+print(dict)

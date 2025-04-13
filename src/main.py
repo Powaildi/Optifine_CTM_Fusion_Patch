@@ -9,7 +9,7 @@ import functions.CreateStitchedTexture as s
 from functions.NamespaceOperation import *
 
 
-def createfiles(propertyfile:Path,blockmodels:dict,patchpath:Path,patchmodels:dict):
+def createfiles(propertyfile:Path,blockmodels:dict,patchpath:Path,patchmodels:dict={"names":[str],"models":[c.blockmodel]}):
     """ 核心组件的集合体，为一个property文件创建Fusion对应的三个文件，方块模型文件需要在这个函数外面创建。
         会在textures文件夹里面创建子文件夹"""
     #读取基本属性
@@ -20,8 +20,10 @@ def createfiles(propertyfile:Path,blockmodels:dict,patchpath:Path,patchmodels:di
 
     #全部的方块模型文件名称，都带有命名空间
     allblocks = blockmodels.get("modelnames")
+    #这个的改动会改变传入的字典的内容
+    #patchmodels = {"names":[],"models":[]}
     allpatchblocks = patchmodels.get("names")
-    
+    allpatchmodels = patchmodels.get("models")
 
     #overlay方法有着完全不同的做法
     if method == "overlay":
@@ -30,16 +32,11 @@ def createfiles(propertyfile:Path,blockmodels:dict,patchpath:Path,patchmodels:di
     else:
         for b in matchBlocks:
             if b in allblocks:
-                #寻找并打开对照的模型
-                index = allblocks.index(b)
-                modelpath = Path(blockmodels["modelpaths"][index])
-                with modelpath.open() as textfile:
-                    refmodel = json.loads(textfile.read())
-
+                
                 namespace,id = seperatenamespace(b,False)
-                #插入段，在这里生成图片，会返回layout,width,height
+                #在这里生成图片，会返回layout,width,height
                 layout,width,height,picture,normal,specular = s.createstitchedtexture(propertyfile,property)
-                picturepath = patchpath / "assets" / namespace / "textures" / "blocks" / id
+                picturepath = patchpath / "assets" / namespace / "textures" / "block" / id
                 picturepath.mkdir(exist_ok=True)
                 #覆盖写入
                 picture.save(picturepath / f"{id}.png")
@@ -60,20 +57,46 @@ def createfiles(propertyfile:Path,blockmodels:dict,patchpath:Path,patchmodels:di
                 mcmetafile.open("w").write(mcmetatext)
 
                 #创建方块模型类对象
+                
+                #获取面
+                faces = property.get("faces",["all"])
+                #对应picturepath
+                mcpath = f"{namespace}:block/{id}/{id}"
+                #获取对照
+                index = allblocks.index(b)
+                modelpath = Path(blockmodels["modelpaths"][index])
+                with modelpath.open() as textfile:
+                    refmodel = json.loads(textfile.read())
+                #获取名称
                 name = blockmodels["modelnames"][index]
                 #有就修改
                 if name in allpatchblocks:
                     index2 = allpatchblocks.index(name)
-                    allpatchblocks["models"][index2].addcontent()
+                    allpatchmodels[index2].addcontent(faces,mcpath)
+                else:
+                    allpatchblocks.append(name)
+                    allpatchmodels.append(c.blockmodel(refmodel,layout,faces,mcpath))
             else:
-                #玻璃板，原木等有多种状态的东西非常特殊，需要单独进行判断，并创建多个模型文件，是破防的主要来源
+                #玻璃板等有多种状态的东西非常特殊，需要单独进行判断，并创建多个模型文件，是破防的主要来源
                 #玻璃板很特殊，不包括在allblocks里，而是有5个文件：
                 #glass_pane_noside, glass_pane_noside_alt, glass_pane_post, glass_pane_side, glass_pane_side_alt
                 #玻璃板以一己之力给我塞了5个需要单独处理的文件，太搞心态了
-                print(b)
+                if "pane" in b:
+                    #玻璃板特化内容
+                    pass
 
+def createfiles2(patchpath:Path,patchmodels:dict):
+    allpatchblocks = patchmodels.get("names")
+    allpatchmodels = patchmodels.get("models")
 
-
+    for i in range(len(allpatchblocks)):
+        namespace,id = seperatenamespace(allpatchblocks[i],False)
+        filepath = patchpath / "assets" / namespace / "models" / "block" / f"{id}.json"
+        
+        model = allpatchmodels[i]
+        text = json.dumps(model.generatedict())
+        with filepath.open("w") as f:
+            f.write(text)
 
 
 
@@ -111,7 +134,6 @@ def run(usetest:bool=False):
     text = open(originalpath / "pack.mcmeta","r").read()
     pack = json.loads(text)
     packmcmeta = c.packmcmeta(pack["pack"]["pack_format"],"1.2.2",originalpath.name)
-    print()
     open(patchpath / "pack.mcmeta","w").write(json.dumps(packmcmeta.generatedict()))
     del text,pack,packmcmeta
     
@@ -124,9 +146,9 @@ def run(usetest:bool=False):
     temp = patchpath / "assets"
     temp.mkdir(exist_ok=True)
     for namespace in blockmodels["namespaces"]:
-        temp2 = temp / namespace / "models" / "blocks"
+        temp2 = temp / namespace / "models" / "block"
         temp2.mkdir(parents=True,exist_ok=True)
-        temp3 = temp / namespace / "textures" / "blocks"
+        temp3 = temp / namespace / "textures" / "block"
         temp3.mkdir(parents=True,exist_ok=True)
     del temp,temp2,temp3
 
@@ -137,7 +159,8 @@ def run(usetest:bool=False):
     
     for propertyfile in propertyfiles:
         createfiles(propertyfile,blockmodels,patchpath,patchmodels)
-        
+    
+    createfiles2(patchpath,patchmodels)
 
 
 
