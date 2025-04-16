@@ -118,8 +118,10 @@ def readpropertieslegacy(filepath:Path) -> dict:
                 #可选属性，none/opposite
                 pass
              """
+
 #内部函数，用于readproperties()
 def splitmatchblockvalues(values:str) -> list[dict[str:str]]:
+    """ 支持方块状态 """
     list = []
 
     for value in values.split(" "):
@@ -247,7 +249,7 @@ def readproperties(filepath:Path) -> dict:
                 d[key] = values
 
             #biomes heights等对连接进行限制的受到Fusion的功能限制不能实现
-            #weights randomLoops symmetry linked 也不支持
+            #weights randomLoops symmetry linked innerSeams也不支持
             case _:
                 pass
     #追加应该存在的部分
@@ -276,7 +278,7 @@ def readproperties(filepath:Path) -> dict:
 def extracttexturepaths(blockmodels:dict) -> dict:
     """ 核心组件之一，从对照的所有方块模型中提取出所有的图片路径，并给每个图片路径所有涉及的模型。模型是打开成字典的形态。
         用一个新的变量接住这个字典。
-        传入的字典添加“models"，模型同上，是打开成字典的形态。
+        传入的字典添加"opened"，模型同上，是打开成字典的形态。
         应该在另外的函数中改变字典，然后用传入的字典统统捞起来一起输出。
         """
     #获取模型路径
@@ -284,7 +286,7 @@ def extracttexturepaths(blockmodels:dict) -> dict:
     names = blockmodels["modelnames"]
     #会打开所有的模型，每个元素都是一个字典，{"name":path.name,"model":json.load(file)}
     models = []
-    blockmodels["models"] = models
+    blockmodels["opened"] = models
     #所有的纹理，里面是mc路径
     alltextures = []
     #二维列表，每一个元素是textures里使用了对应序号元素的模型，是models里的字典元素
@@ -310,29 +312,52 @@ def extracttexturepaths(blockmodels:dict) -> dict:
                         else:
                             alltextures.append(value)
                             affectedmodels.append([models[-1]])
+            file.close()
                     
     return texturedict
 
-def getblocktomodeldict(blockstates:dict={"namespaces":[],"blocknames":[],"statepaths":[]}):
-    """ 核心组件之一，在字典里面添加“modelsinside”，里面包含所有方块和涉及的模型。 
+def openblockstates(blockstates:dict={"namespaces":[],"blocknames":[],"statepaths":[]}):
+    """ 核心组件之一，在字典里面添加"opened”，里面是打开的文件
         不返回任何东西 """
 
     #二维列表
-    modelsinside = []
+    opened = []
 
     for path in blockstates.get("statepaths"):
-        modelsinside.append([])
         with path.open("r") as file:
             state = json.load(file)
-            variants = state.get("variants")
-            for value in variants.values():
-                #value是一个字典
-                 modelsinside[-1].append(addnamespace(value.get("model")))#必须有命名空间
+            opened.append(state)
+            file.close()
 
-    blockstates["modelsinside"] = modelsinside
+    blockstates["opened"] = opened
         
-def matchtilesandblocks(match:str,texturedict:dict,blockstates:dict):
-    """ 根据输入的属性，返回对应的模型，支持特化方块属性，不支持matchTiles嵌套 """
+def matchblocks(match:dict,blockmodels:dict,blockstates:dict):
+    """ 根据输入的属性，返回对应的模型，模型是打开的形态
+        支持特化方块属性 """
+    name = match.get("name")
+    variant = match.get("variant")
+
+    
+    matched = []
+
+    if name in blockstates["blocknames"]:
+        index = blockstates["blocknames"].index(name)
+        statement = blockstates["opened"][index]
+        variants = statement.get("variants")
+        
+        if variant:
+            for i in variants:
+                if i == variant:
+                    matched.append(i.get("model"))
+
+
+    
+    
+
+def matchtiles(match:str,texturedict:dict,blockstates:dict):
+    """ 根据输入的属性，返回对应的模型，不支持matchTiles嵌套 """
+
+
 
 
     
