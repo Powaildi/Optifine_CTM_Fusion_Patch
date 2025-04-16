@@ -122,6 +122,7 @@ def findblockstates(folder_path:Path,dict:dict={"blocknames":[],"statepaths":[]}
                 else:
                     dict["blocknames"].append(name)
                     dict["statepaths"].append(path)
+    return dict
                 
 
     

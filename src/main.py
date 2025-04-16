@@ -36,7 +36,7 @@ def createfiles(propertyfile:Path,patchpath:Path,overlaydict:dict,texturedict:di
                 #在这里生成图片，会返回layout,width,height
                 layout,width,height,picture,normal,specular = s.createstitchedtexture(propertyfile,property)
                 picturepath = patchpath / "assets" / namespace / "textures" / "block" / id
-                picturepath.mkdir(exist_ok=True)
+                picturepath.mkdir(parents=True,exist_ok=True)
                 #覆盖写入
                 picture.save(picturepath / f"{id}.png")
                 if normal:
@@ -126,26 +126,18 @@ def run(usetest:bool=False):
     texturedict = r.extracttexturepaths(blockmodels)
 
     blockstates = f.findblockstates(originalpath)
+    print(blockstates)
     blockstates = f.findblockstates(originalpath,blockstates)
 
-    #创建文件夹
-    temp = patchpath / "assets"
-    temp.mkdir(exist_ok=True)
-    for namespace in blockmodels["namespaces"]:
-        temp2 = temp / namespace / "models" / "block"
-        temp2.mkdir(parents=True,exist_ok=True)
-        temp3 = temp / namespace / "textures" / "block"
-        temp3.mkdir(parents=True,exist_ok=True)
-    del temp,temp2,temp3
-
     #创建贴图路和方块模型列表
-    
+    """ 
     r.getblocktomodeldict(blockstates)
     print(texturedict["textures"])
     overlaydict = {"names":[],"models":[]}
     for propertyfile in propertyfiles:
         createfiles(propertyfile,patchpath,overlaydict,texturedict)
-    
+     """
+    print(blockmodels["opened"])
     #createfiles2(patchpath,patchmodels)
 
 

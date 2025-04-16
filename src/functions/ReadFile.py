@@ -200,6 +200,7 @@ def splitfacesvalues(values:str) -> list[str]:
     
     return list(collection)
 
+#读取属性文件
 def readproperties(filepath:Path) -> dict:
     """ 核心组件之一，读取xxx.properties，返回一个具有特定内容的字典，这个字典将会在另外的函数中使用 
         https://optifine.readthedocs.io/ctm.html"""
@@ -274,6 +275,7 @@ def readproperties(filepath:Path) -> dict:
     return d
 
 
+#读取模型和方块文件
 #下面这两个有点像
 def extracttexturepaths(blockmodels:dict) -> dict:
     """ 核心组件之一，从对照的所有方块模型中提取出所有的图片路径，并给每个图片路径所有涉及的模型。模型是打开成字典的形态。
@@ -284,7 +286,7 @@ def extracttexturepaths(blockmodels:dict) -> dict:
     #获取模型路径
     refmodelpaths = blockmodels["modelpaths"]
     names = blockmodels["modelnames"]
-    #会打开所有的模型，每个元素都是一个字典，{"name":path.name,"model":json.load(file)}
+    #会打开所有的模型，每个元素都是一个字典，{"name":name,"model":json.load(file),"object":None}
     models = []
     blockmodels["opened"] = models
     #所有的纹理，里面是mc路径
@@ -316,11 +318,10 @@ def extracttexturepaths(blockmodels:dict) -> dict:
                     
     return texturedict
 
-def openblockstates(blockstates:dict={"namespaces":[],"blocknames":[],"statepaths":[]}):
+def openblockstates(blockstates:dict={"blocknames":[],"statepaths":[]}):
     """ 核心组件之一，在字典里面添加"opened”，里面是打开的文件
         不返回任何东西 """
 
-    #二维列表
     opened = []
 
     for path in blockstates.get("statepaths"):
@@ -331,41 +332,92 @@ def openblockstates(blockstates:dict={"namespaces":[],"blocknames":[],"statepath
 
     blockstates["opened"] = opened
         
-def matchblocks(match:dict,blockmodels:dict,blockstates:dict):
-    """ 根据输入的属性，返回对应的模型，模型是打开的形态
+
+#根据读取的属性配对模型，模型是打开成字典的形式
+#内部函数，用于matchblocks
+def searchblockmodels(statement:dict) -> dict:
+    """ 从blockstates的文件里找出所有的模型，返回一个字典 """
+    result = {}
+    variants = statement.get("variants")
+    for key in variants.keys():
+        result[key] = []
+        values = variants[key]
+        if type(values) == dict:
+            #values只有一个字典
+            result[key].append(values.get("model"))
+        else:
+            #values是一个字典列表
+            for value in values:
+                result[key].append(value.get("model"))
+    print(result)
+        
+def matchblocks(match:dict,blockstates:dict,matched=[]):
+    """ 输入matchBlocks里面的一个元素
+        根据输入的属性，在matched里添加模型，模型是mcpath。
         支持特化方块属性 """
     name = match.get("name")
     variant = match.get("variant")
 
-    
-    matched = []
-
     if name in blockstates["blocknames"]:
         index = blockstates["blocknames"].index(name)
+        #得到打开的blockstate
         statement = blockstates["opened"][index]
-        variants = statement.get("variants")
-        
+        models = searchblockmodels(statement)
         if variant:
-            for i in variants:
-                if i == variant:
-                    matched.append(i.get("model"))
+            for key in models.keys():
+                if key == variant:
+                    matched += models[key]
+        else:
+            for key in models.keys():
+                matched += models[key]
 
+def matchtiles(match:str,texturedict:dict,matched=[]):
+    """ 输入matchTiles里面的一个元素
+        根据输入的属性，在matched里添加模型，模型是打开成字典的状态。
+        不支持matchTiles嵌套 """
+    if match in texturedict["textures"]:
+        index = texturedict["textures"].index(match)
+        matched += texturedict["affectedmodels"][index]
 
-    
-    
+    return matched
 
-def matchtiles(match:str,texturedict:dict,blockstates:dict):
-    """ 根据输入的属性，返回对应的模型，不支持matchTiles嵌套 """
+def matchblockandtiles(property:dict,blockstates:dict,blockmodels:dict,texturedict:dict,isConnectBlcockTiles:bool=False) -> list[dict]:
+    """ 核心组件之一，从读取的属性中配对模型，返回模型列表，模型是打开成字典的形式。 """
+    matchBlocks = property.get("matchBlocks")
+    matchTiles = property.get("matchTiles")
 
+    if isConnectBlcockTiles:
+        matchBlocks = property.get("connectBlocks")
+        matchTiles = property.get("connectTiles")
 
+    matched = []
+    if matchBlocks:
+        matchednames = []
+        for match in matchBlocks:
+            matchblocks(match,blockstates,matchednames)
+        for name in matchednames:
+            if name in blockmodels["modelnames"]:
+                index = blockmodels["modelnames"].index(name)
+                matched.append(blockmodels["opened"][index])
+    elif matchTiles:
+        for match in matchTiles:
+            matchblocks(match,texturedict,matched)
+    else:
+        pass
+
+    return matched
 
 
     
     
 
 if __name__ == "__main__":
+    #proerties
     p1 = Path(r"E:\[1.20]Minecraft\.minecraft\versions\1.20.1-NeoForge_test\resourcepacks\Stay_True_1.20\assets\minecraft\optifine\ctm\glass\aregular\glass.properties")
     p2 = Path(r"E:\[1.20]Minecraft\.minecraft\versions\1.20.1-NeoForge_test\resourcepacks\Stay_True_1.20\assets\minecraft\optifine\ctm\_overlays\moss_block\moss_block.properties")
     p3 = Path(r"E:\[1.20]Minecraft\.minecraft\versions\1.20.1-NeoForge_test\resourcepacks\Mizunos 16 Craft JE_1.20.4-1.0_230105\assets\minecraft\optifine\ctm\slab_brick\brick_slab.properties")
-    t = readproperties(p3)
-    print(t)
+    #blockstates
+    p4 = Path(r"E:\[1.20]Minecraft\.minecraft\versions\1.20.1-NeoForge_test\resourcepacks\Stay_True_1.20\assets\minecraft\blockstates\beetroots.json")
+    with p4.open() as state:
+        statement = json.load(state)
+        searchblockmodels(statement)
