@@ -6,34 +6,33 @@ import classes.JsonFileClasses as c
 import functions.FolderOperation as f
 import functions.ReadFile as r
 import functions.CreateStitchedTexture as s
-from functions.NamespaceOperation import *
 
 
-def createfiles(propertyfile:Path,blockmodels:dict,patchpath:Path,patchmodels:dict={"names":[str],"models":[c.blockmodel]}):
-    """ 核心组件的集合体，为一个property文件创建Fusion对应的三个文件，方块模型文件需要在这个函数外面创建。
+
+def createfiles(propertyfile:Path,patchpath:Path,overlaydict:dict,texturedict:dict={"textures":list[str],"modifyto":list,"affectedmodels":list[dict]}):
+    """ 核心组件的集合体，为一个property文件创建连接纹理贴图和pngmcmeta.
+        修改传入的texturedict,overlaydict。
         会在textures文件夹里面创建子文件夹"""
     #读取基本属性
     property = r.readproperties(propertyfile)
     method = property.get("method")
     #给他们上命名空间
-    matchBlocks = [addnamespace(x) for x in property.get("matchBlocks")]
+    matchBlocks = [r.addnamespace(x) for x in property.get("matchBlocks")]
 
-    #全部的方块模型文件名称，都带有命名空间
-    allblocks = blockmodels.get("modelnames")
-    #这个的改动会改变传入的字典的内容
-    #patchmodels = {"names":[],"models":[]}
-    allpatchblocks = patchmodels.get("names")
-    allpatchmodels = patchmodels.get("models")
-
+    #全部的贴图文件名称，都带有命名空间
+    alltexture = texturedict.get("textures")
+    
+    
     #overlay方法有着完全不同的做法
     if method == "overlay":
         pass
     #一般方法
     else:
         for b in matchBlocks:
-            if b in allblocks:
+            #贴图和方块不能实现完全的对位
+            if b in alltexture:
                 
-                namespace,id = seperatenamespace(b,False)
+                namespace,id = r.seperatenamespace(b,False)
                 #在这里生成图片，会返回layout,width,height
                 layout,width,height,picture,normal,specular = s.createstitchedtexture(propertyfile,property)
                 picturepath = patchpath / "assets" / namespace / "textures" / "block" / id
@@ -63,19 +62,7 @@ def createfiles(propertyfile:Path,blockmodels:dict,patchpath:Path,patchmodels:di
                 #对应picturepath
                 mcpath = f"{namespace}:block/{id}/{id}"
                 #获取对照
-                index = allblocks.index(b)
-                modelpath = Path(blockmodels["modelpaths"][index])
-                with modelpath.open() as textfile:
-                    refmodel = json.loads(textfile.read())
-                #获取名称
-                name = blockmodels["modelnames"][index]
-                #有就修改
-                if name in allpatchblocks:
-                    index2 = allpatchblocks.index(name)
-                    allpatchmodels[index2].addcontent(faces,mcpath)
-                else:
-                    allpatchblocks.append(name)
-                    allpatchmodels.append(c.blockmodel(refmodel,layout,faces,mcpath))
+
             else:
                 #玻璃板等有多种状态的东西非常特殊，需要单独进行判断，并创建多个模型文件，是破防的主要来源
                 #玻璃板很特殊，不包括在allblocks里，而是有5个文件：
@@ -90,19 +77,13 @@ def createfiles2(patchpath:Path,patchmodels:dict):
     allpatchmodels = patchmodels.get("models")
 
     for i in range(len(allpatchblocks)):
-        namespace,id = seperatenamespace(allpatchblocks[i],False)
+        namespace,id = r.seperatenamespace(allpatchblocks[i],False)
         filepath = patchpath / "assets" / namespace / "models" / "block" / f"{id}.json"
         
         model = allpatchmodels[i]
         text = json.dumps(model.generatedict())
         with filepath.open("w") as f:
             f.write(text)
-
-
-
-
-
-
 
 
 
@@ -137,10 +118,15 @@ def run(usetest:bool=False):
     open(patchpath / "pack.mcmeta","w").write(json.dumps(packmcmeta.generatedict()))
     del text,pack,packmcmeta
     
-    #收集文件数据
+    #收集文件路径，为后续模型提呈做准备
     propertyfiles = f.findpropertyfiles(originalpath)
+
     blockmodels = f.findmodelfiles(originalpath)
     blockmodels = f.findmodelfiles(referencepath,blockmodels)
+    texturedict = r.extracttexturepaths(blockmodels)
+
+    blockstates = f.findblockstates(originalpath)
+    blockstates = f.findblockstates(originalpath,blockstates)
 
     #创建文件夹
     temp = patchpath / "assets"
@@ -152,15 +138,15 @@ def run(usetest:bool=False):
         temp3.mkdir(parents=True,exist_ok=True)
     del temp,temp2,temp3
 
-    #创建方块模型列表
-    patchmodels = {"names":[],"models":[]}
+    #创建贴图路和方块模型列表
     
-    #创建文件
-    
+    r.getblocktomodeldict(blockstates)
+    print(texturedict["textures"])
+    overlaydict = {"names":[],"models":[]}
     for propertyfile in propertyfiles:
-        createfiles(propertyfile,blockmodels,patchpath,patchmodels)
+        createfiles(propertyfile,patchpath,overlaydict,texturedict)
     
-    createfiles2(patchpath,patchmodels)
+    #createfiles2(patchpath,patchmodels)
 
 
 
