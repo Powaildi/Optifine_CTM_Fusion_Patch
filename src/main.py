@@ -16,9 +16,34 @@ def createfiles(propertyfile:Path,patchpath:Path,blockstates:dict,blockmodels:di
     #读取基本属性
     property = r.readproperties(propertyfile)
     method = property.get("method")
+    
 
+    #获取匹配到的模型，matchTiles未验证
     matchedmodels = r.matchblockandtiles(property,blockstates,blockmodels,texturedict)
-    print(matchedmodels)
+    #没有匹配到就不要生成图片了
+    if not matchedmodels:
+        print(f"{propertyfile}没有匹配到模型，未创建图片")
+        return
+    
+    #生成图片的mcpath
+    picmcpath = f.pathtomcpath(propertyfile)
+    namespace,id = r.seperatenamespace(picmcpath,False)
+    picpath = patchpath / "assets" / namespace / "textures" / id
+    #id里面有多层，生成的类似于assets\minecraft\textures\ctm\acacia_log\acacia_log，由于最后一个是文件名，路径应该退一层
+    #到时候的图片和属性文件名称： f"{picname}.png"
+    picname = picpath.name
+    #退一层
+    picpath = picpath.parent
+    #生成文件夹
+    picpath.mkdir(parents=True,exist_ok=True)
+
+    #修改面的名称
+    faces = property.get("faces")
+    print(faces)
+    for matchedmodel in matchedmodels:
+        pass
+
+
     #全部的贴图文件名称，都带有命名空间
     alltexture = texturedict.get("textures")
     
@@ -137,6 +162,7 @@ def run(usetest:bool=False):
     overlaydict = {"names":[],"models":[]}
     for propertyfile in propertyfiles:
         createfiles(propertyfile,patchpath,blockstates,blockmodels,overlaydict,texturedict)
+        break
         
 
     #createfiles2(patchpath,patchmodels)

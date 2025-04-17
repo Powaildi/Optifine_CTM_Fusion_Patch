@@ -422,7 +422,17 @@ def matchblockandtiles(property:dict,blockstates:dict,blockmodels:dict,texturedi
     return matched
 
 
-    
+#根据读取的模型寻找对应的纹理变量
+facesdict = {"top":[],"bottom":[],"sides":[],"north":[],"south":[],"east":[],"west":[]}
+def matchfaces(faces:list[str],matchedmodel:dict,blockmodels:dict,matched:list):
+    """ 根据读取的模型寻找对应的纹理变量，不能应对faces=sides而模型中只有all的情况。特指东西南北方向会得到sides，写了all就全返回。
+        faces从properties文件提取。
+        对传入的matched进行修改。
+        额外使用了一个全局列表来快速获取结果，可能会出问题。 """
+    global facesdict
+    for face in faces:
+        pass
+        
     
 
 if __name__ == "__main__":
