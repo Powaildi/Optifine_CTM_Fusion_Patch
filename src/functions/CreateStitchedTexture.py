@@ -124,7 +124,6 @@ def matchmethodmapping(method:str,tiles:list):
             #这个continuous在layout中并不存在，而是 "type": "continuous"
             return "continuous",tiles
         case "overlay":
-            print("matched overlay")
             return "overlay",mapping(tiles,map_overlay)
         case "random":
              #这个random在layout中并不存在，而是 "type": "random"

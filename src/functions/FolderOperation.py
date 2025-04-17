@@ -106,7 +106,7 @@ def findblockstates(folder_path:Path,dict:dict={"blocknames":[],"statepaths":[]}
             modelpaths = m.rglob("*.json")
             for path in modelpaths:
                 #生成名称，如minecraft:block/flowering_azalea_leaves
-                dict["blocknames"].append(path.name.split(".")[0])
+                dict["blocknames"].append(pathtomcpath(path))
                 #生成路径
                 dict["statepaths"].append(path)
     else:
@@ -116,7 +116,7 @@ def findblockstates(folder_path:Path,dict:dict={"blocknames":[],"statepaths":[]}
             #查找元素，有就不干，没有就添加
             modelpaths = m.rglob("*.json")
             for path in modelpaths:
-                name = path.name.split(".")[0]
+                name = pathtomcpath(path)
                 if name in dict["blocknames"]:
                     pass
                 else:

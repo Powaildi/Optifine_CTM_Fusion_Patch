@@ -9,26 +9,26 @@ import functions.CreateStitchedTexture as s
 
 
 
-def createfiles(propertyfile:Path,patchpath:Path,overlaydict:dict,texturedict:dict={"textures":list[str],"modifyto":list,"affectedmodels":list[dict]}):
+def createfiles(propertyfile:Path,patchpath:Path,blockstates:dict,blockmodels:dict,overlaydict:dict,texturedict:dict={"textures":list[str],"modifyto":list,"affectedmodels":list[dict]}):
     """ 核心组件的集合体，为一个property文件创建连接纹理贴图和pngmcmeta.
         修改传入的texturedict,overlaydict。
         会在textures文件夹里面创建子文件夹"""
     #读取基本属性
     property = r.readproperties(propertyfile)
     method = property.get("method")
-    #给他们上命名空间
-    matchBlocks = [r.addnamespace(x) for x in property.get("matchBlocks")]
 
+    matchedmodels = r.matchblockandtiles(property,blockstates,blockmodels,texturedict)
+    print(matchedmodels)
     #全部的贴图文件名称，都带有命名空间
     alltexture = texturedict.get("textures")
     
-    
+    """  
     #overlay方法有着完全不同的做法
     if method == "overlay":
         pass
     #一般方法
     else:
-        for b in matchBlocks:
+        for b in None:
             #贴图和方块不能实现完全的对位
             if b in alltexture:
                 
@@ -71,6 +71,7 @@ def createfiles(propertyfile:Path,patchpath:Path,overlaydict:dict,texturedict:di
                 if "pane" in b:
                     #玻璃板特化内容
                     pass
+    """
 
 def createfiles2(patchpath:Path,patchmodels:dict):
     allpatchblocks = patchmodels.get("names")
@@ -126,18 +127,18 @@ def run(usetest:bool=False):
     texturedict = r.extracttexturepaths(blockmodels)
 
     blockstates = f.findblockstates(originalpath)
-    print(blockstates)
     blockstates = f.findblockstates(originalpath,blockstates)
-
+    r.openblockstates(blockstates)
+    
     #创建贴图路和方块模型列表
-    """ 
-    r.getblocktomodeldict(blockstates)
-    print(texturedict["textures"])
+
+    
+
     overlaydict = {"names":[],"models":[]}
     for propertyfile in propertyfiles:
-        createfiles(propertyfile,patchpath,overlaydict,texturedict)
-     """
-    print(blockmodels["opened"])
+        createfiles(propertyfile,patchpath,blockstates,blockmodels,overlaydict,texturedict)
+        
+
     #createfiles2(patchpath,patchmodels)
 
 

@@ -211,6 +211,8 @@ def readproperties(filepath:Path) -> dict:
     d = {}
     #读取内容
     for line in list:
+        if not line:
+            continue
         key,values = line.split("=",1)
         #去除空格，防止带空格了以后使用的函数不认
         key = key.strip()
@@ -219,6 +221,7 @@ def readproperties(filepath:Path) -> dict:
             #在这里没有的话，就不写入数据
             case "matchBlocks":
                 d[key] = splitmatchblockvalues(values)
+                #会出现空的
             case "matchTiles":
                 d[key] = splitmatchtilesvalues(values)
             case "connectBlocks":
@@ -349,15 +352,22 @@ def searchblockmodels(statement:dict) -> dict:
             #values是一个字典列表
             for value in values:
                 result[key].append(value.get("model"))
-    print(result)
+    return result
         
+def removeduplications(input:list) -> list:
+    """ 从一个列表中提取出不同的元素到另一个列表，返回后者 """
+    list = []
+    for x in input:
+        if x not in list:
+            list.append(x)
+    return list
+
 def matchblocks(match:dict,blockstates:dict,matched=[]):
     """ 输入matchBlocks里面的一个元素
         根据输入的属性，在matched里添加模型，模型是mcpath。
         支持特化方块属性 """
     name = match.get("name")
     variant = match.get("variant")
-
     if name in blockstates["blocknames"]:
         index = blockstates["blocknames"].index(name)
         #得到打开的blockstate
@@ -395,13 +405,17 @@ def matchblockandtiles(property:dict,blockstates:dict,blockmodels:dict,texturedi
         matchednames = []
         for match in matchBlocks:
             matchblocks(match,blockstates,matchednames)
+            #去除重复元素
+            matchednames = removeduplications(matchednames)
         for name in matchednames:
+            #补充命名空间
+            name = addnamespace(name)
             if name in blockmodels["modelnames"]:
                 index = blockmodels["modelnames"].index(name)
                 matched.append(blockmodels["opened"][index])
     elif matchTiles:
         for match in matchTiles:
-            matchblocks(match,texturedict,matched)
+            matchtiles(match,texturedict,matched)
     else:
         pass
 
