@@ -42,7 +42,8 @@ def findpropertyfiles(folder_path:Path) -> list[Path]:
     
 
 def pathtomcpath(path:Path) -> str:
-    """ 将路径对象转化为mc路径 """
+    """ 将路径对象转化为mc路径
+        所谓mc路径是我的称呼，它在mc wiki 中叫作 命名空间ID"""
     list = []
     for i in path.parents:
         if i.name == "assets":

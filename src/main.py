@@ -42,9 +42,11 @@ def createfiles(propertyfile:Path,patchpath:Path,blockstates:dict,blockmodels:di
     matchedtexturekeys = []
     #二重循环加递归，看着就感觉恐怖
     for matchedmodel in matchedmodels:
-        for face in faces:
-            r.matchfaces(face,matchedmodel,blockmodels,matchedtexturekeys)
-    print(matchedtexturekeys)
+        temp = matchedmodel.get("model")
+        obj = matchedmodel["object"] = c.blockmodel(temp)
+        obj.evaluatetype(blockmodels)
+        print(obj.__dict__)
+    
 
 
     #全部的贴图文件名称，都带有命名空间

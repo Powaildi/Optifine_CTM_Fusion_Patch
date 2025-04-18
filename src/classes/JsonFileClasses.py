@@ -115,18 +115,99 @@ class blockmodellegacy:
         
         return self.reference
 
+#内部函数，blockmodels里会用到
+def getsixfacetexture(elements:list[dict]) -> list[str]:
+    dict = {}
+    for element in elements:
+        faces = element.get("faces")
+        for key,value in faces.items():
+            dict[key] = value.get("texture")
+
+    top = dict.get("up")
+    bottom = dict.get("down")
+    north = dict.get("north")
+    south = dict.get("south")
+    west = dict.get("west")
+    east = dict.get("east")
+
+    return [top,bottom,north,south,west,east]
+
+def changesixfacetexture(textures:dict,sixfacetexture:list[str]):
+    for key,value in textures.items():
+        #value有#，而key没有，要加一下
+        if ("#" + key)  in sixfacetexture:
+            index = sixfacetexture.index("#" + key)
+            sixfacetexture[index] = value
+    
+
+def getsixfacestexture2(parent:str,blockmodels:dict,sixfacetexture:list[str]) -> list[str]:
+    if parent in blockmodels["modelnames"]:
+        index = blockmodels["modelnames"].index(parent)
+        parentmodel = blockmodels["opened"][index]
+    modelinside = parentmodel.get("model")
+    if modelinside:
+        elements = modelinside.get("elements")
+        textures = modelinside.get("textures")
+        parent = modelinside.get("parent")
+        if parent:
+            parent = r.addnamespace(parent)
+            sixfacetexture = getsixfacestexture2(parent,blockmodels,sixfacetexture)
+        if elements:
+            sixfacetexture = getsixfacetexture(elements)
+        if textures:    
+            changesixfacetexture(textures,sixfacetexture)
+    return sixfacetexture
+
 class blockmodel:
     """ 
     方块模型文件，会生成能被Fusion识别的形式 xxx.json
     必须提供原始方块模型字典。
     """
     def __init__(self,reference:dict):
-        #对照用，不要修改这个字典的内容
+        #dict 对照用，不要修改这个字典的内容
         self.reference = reference
+
+        #wiki中一个模型重要的结构成分，有些可以从父模型继承
+        #str 父模型的命名空间ID，在知道他它叫命名空间ID之前。我叫它 mcpath
         self.parent = reference.get("parent")
+        if self.parent:
+            self.parent = r.addnamespace(self.parent)
+        #dict 纹理变量列表。 
         self.textures = reference.get("textures")
+        #list[dict] 模型内的模型元素。
+        self.elements = reference.get("elements")
+        #dict （默认所有显示模式无变换）模型在不同显示模式下的渲染变换。
+        self.display = reference.get("display")
+
+        #自定义内容
+        #六个面，从原模型文件中拿来，通常应该是纹理变量，如 #texture，到时候用于检测
+        self.top = None
+        self.bottom = None
+        self.north = None
+        self.south = None
+        self.west = None
+        self.east = None
+        #从上面六个面推断出来的类型
+        #六个面一样的：cube
+        #上面和下面一样，侧面一样，类似原木：log
+        #上面和下面不一样，侧面一样，类似桶：barrel
+        #其它：irregular
+        self.evaluatedtype = None
+        #从xxx.propertied文件中推断出来的类型
+        self.targettype = None
+    def evaluatetype(self,blockmodels:dict):
+        """ 寻找父模型，获取六个面的信息，并推断自己是什么样的方块。
+            假如模型会思考.mp3 """
+        #获取六个面
+        if self.elements:
+            sixfacetexture = getsixfacetexture(self.elements)
+        else:
+            sixfacetexture = []
+            sixfacetexture = getsixfacestexture2(self.parent,blockmodels,sixfacetexture)
+
         
-        
+
+        self.top,self.bottom,self.north,self.south,self.west,self.east = sixfacetexture
 
 
 class pngmcmeta:
