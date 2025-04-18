@@ -1,4 +1,5 @@
-
+#不要直接运行这个东西
+import functions.ReadFile as r
 
 
 class packmcmeta:
@@ -25,11 +26,8 @@ NeoForge 1.20.1的Fusion只有1.1.1，试试Forge版
 """
 
 
-class blockmodel:
-    """ 
-    方块模型文件，会生成能被Fusion识别的形式 xxx.json
-    这一部分涉及到mc的方块类型等复杂因素，现在的做法将会导致很多的不兼容问题，必须提供原始方块模型文件
-    """
+class blockmodellegacy:
+    """ 老的方块模型类，仅供参考 """
     def __init__(self,reference:dict={},layout:str="full",faces:list[str]=[],mcpath:str=""):
         #原来的block.json，必须有
         self.reference = reference.copy()
@@ -116,6 +114,19 @@ class blockmodel:
                 self.reference["textures"]["bottom"] = self.all
         
         return self.reference
+
+class blockmodel:
+    """ 
+    方块模型文件，会生成能被Fusion识别的形式 xxx.json
+    必须提供原始方块模型字典。
+    """
+    def __init__(self,reference:dict):
+        #对照用，不要修改这个字典的内容
+        self.reference = reference
+        self.parent = reference.get("parent")
+        self.textures = reference.get("textures")
+        
+        
 
 
 class pngmcmeta:

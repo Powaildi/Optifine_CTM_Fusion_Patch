@@ -39,9 +39,12 @@ def createfiles(propertyfile:Path,patchpath:Path,blockstates:dict,blockmodels:di
 
     #修改面的名称
     faces = property.get("faces")
-    print(faces)
+    matchedtexturekeys = []
+    #二重循环加递归，看着就感觉恐怖
     for matchedmodel in matchedmodels:
-        pass
+        for face in faces:
+            r.matchfaces(face,matchedmodel,blockmodels,matchedtexturekeys)
+    print(matchedtexturekeys)
 
 
     #全部的贴图文件名称，都带有命名空间
