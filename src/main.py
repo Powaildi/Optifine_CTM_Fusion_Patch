@@ -78,7 +78,7 @@ def createfiles(propertyfile:Path,patchpath:Path,blockstates:dict,blockmodels:di
     if "overlay" in method:
         #获取应该连接的方块
         obj = c.blockmodel_overlay(property,picmcpath,layout)
-        
+        obj.decideelements()
         #给个路径和名字
         modelpath = patchpath / "assets" / "minecraft" / "models" / "overlay"
         modelpath.mkdir(parents=True,exist_ok=True)
