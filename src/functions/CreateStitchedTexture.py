@@ -128,6 +128,8 @@ def matchmethodmapping(method:str,tiles:list):
         case "random":
              #这个random在layout中并不存在，而是 "type": "random"
             return "random",tiles
+        case _:
+            raise ValueError(f"暂时不支持{method}方法")
 
 def getpicturepath(propertypath:Path,tiles:list) ->list :
     """ 获取与xxx.properties同一文件夹的图片，可能会获取到不存在的图片路径 """

@@ -158,6 +158,20 @@ def getsixfacestexture2(parent:str,blockmodels:dict,sixfacetexture:list[str]) ->
             changesixfacetexture(textures,sixfacetexture)
     return sixfacetexture
 
+def evaluatefaces(sixfacetexture:list[str]) -> str:
+    """ 返回的名称只是方便识记，可以是任何东西，但是要和后面的代码对接 """
+    top,bottom,north,south,west,east = sixfacetexture
+    if north == south == west == east:
+        if top == bottom:
+            if top == north:
+                return "cube"
+            else:
+                return "log"
+        else:
+            return "barrel"
+    else:
+        return "irregular"
+ 
 class blockmodel:
     """ 
     方块模型文件，会生成能被Fusion识别的形式 xxx.json
@@ -193,6 +207,13 @@ class blockmodel:
         #上面和下面不一样，侧面一样，类似桶：barrel
         #其它：irregular
         self.evaluatedtype = None
+        #从xxx.properties读取
+        self.top2 = None
+        self.bottom2 = None
+        self.north2 = None
+        self.south2 = None
+        self.west2 = None
+        self.east2 = None
         #从xxx.propertied文件中推断出来的类型
         self.targettype = None
     def evaluatetype(self,blockmodels:dict):
@@ -205,9 +226,51 @@ class blockmodel:
             sixfacetexture = []
             sixfacetexture = getsixfacestexture2(self.parent,blockmodels,sixfacetexture)
 
-        
-
+        self.evaluatedtype = evaluatefaces(sixfacetexture)
         self.top,self.bottom,self.north,self.south,self.west,self.east = sixfacetexture
+        
+    def modifytexture(self,property:dict,texture:str):
+        """ 可以多次执行，效果为覆盖，存在多次执行后依然有值为空的情况 """
+        faces = property.get("faces")
+        if faces:
+            for face in faces:
+                match face:
+                    case "top":
+                        self.top2 = texture
+                    case "bottom":
+                        self.bottom2 = texture
+                    case "north":
+                        self.north2 = texture
+                    case "south":
+                        self.south2 = texture
+                    case "west":
+                        self.west2 = texture
+                    case "east":
+                        self.east2 = texture
+                    case "sides":
+                        self.north2 = texture
+                        self.south2 = texture
+                        self.west2 = texture
+                        self.east2 = texture
+                    case "all":
+                        self.top2 = texture
+                        self.bottom2 = texture
+                        self.north2 = texture
+                        self.south2 = texture
+                        self.west2 = texture
+                        self.east2 = texture
+        else:
+            #没有默认为all
+            self.top2 = texture
+            self.bottom2 = texture
+            self.north2 = texture
+            self.south2 = texture
+            self.west2 = texture
+            self.east2 = texture
+
+    def evaluatetargettype(self):
+        """ 在所有贴图都处理完之后再用 """
+        self.targettype = evaluatefaces([self.top2,self.bottom2,self.north2,self.south2,self.west2,self.east2])
 
 
 class pngmcmeta:
