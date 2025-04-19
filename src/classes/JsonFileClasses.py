@@ -115,6 +115,8 @@ class blockmodellegacy:
         
         return self.reference
 
+
+
 #内部函数，blockmodels里会用到
 def getsixfacetexture(elements:list[dict]) -> list[str]:
     dict = {}
@@ -161,6 +163,8 @@ def getsixfacestexture2(parent:str,blockmodels:dict,sixfacetexture:list[str]) ->
         if textures:    
             changesixfacetexture(textures,sixfacetexture)
     return sixfacetexture
+
+
 
 def evaluatefaces(sixfacetexture:list[str]) -> str:
     """ 返回的名称只是方便识记，可以是任何东西，但是要和后面的代码对接 """
@@ -222,6 +226,7 @@ class blockmodel:
         self.targettype = None
     def evaluatetype(self,blockmodels:dict):
         """ 寻找父模型，获取六个面的信息，并推断自己是什么样的方块。
+            六个面的信息也会赋值到另一组属性(self.top2等)
             假如模型会思考.mp3 """
         #获取六个面
         if self.elements:
@@ -232,6 +237,8 @@ class blockmodel:
 
         self.evaluatedtype = evaluatefaces(sixfacetexture)
         self.top,self.bottom,self.north,self.south,self.west,self.east = sixfacetexture
+        #附加内容
+        self.top2,self.bottom2,self.north2,self.south2,self.west2,self.east2 = sixfacetexture
         
     def modifytexture(self,property:dict,texture:str):
         """ 可以多次执行，效果为覆盖，存在多次执行后依然有值为空的情况 """
@@ -276,6 +283,93 @@ class blockmodel:
         """ 在所有贴图都处理完之后再用 """
         self.targettype = evaluatefaces([self.top2,self.bottom2,self.north2,self.south2,self.west2,self.east2])
 
+
+
+def gettexturebyproperty(property:dict,texture:str):
+    """ 获取修改后的材质，但是没有修改到的为None """
+    faces = property.get("faces")
+    top = None
+    bottom = None
+    north = None
+    south = None
+    west = None
+    east = None
+    if faces:
+        for face in faces:
+            match face:
+                case "top":
+                    top = texture
+                case "bottom":
+                    bottom = texture
+                case "north":
+                    north = texture
+                case "south":
+                    south = texture
+                case "west":
+                    west = texture
+                case "east":
+                    east = texture
+                case "sides":
+                    north = texture
+                    south = texture
+                    west = texture
+                    east = texture
+                case "all":
+                    top = texture
+                    bottom = texture
+                    north = texture
+                    south = texture
+                    west = texture
+                    east = texture
+    else:
+            #没有默认为all
+        top = texture
+        bottom = texture
+        north = texture
+        south = texture
+        west = texture
+        east = texture
+
+    return [top,bottom,north,south,west,east]
+
+def evaluatefacesforoverlay(sixfacetexture:list[str]) -> str:
+    """ 返回的名称只是方便识记，可以是任何东西，但是要和后面的代码对接 """
+    top,bottom,north,south,west,east = sixfacetexture
+    #它们只有两种可能：None,texture
+    if north == south == west == east:
+        if top == bottom:
+            if top == north:
+                if top == None:
+                    return
+                return "cube"
+            else:
+                if top == None:
+                    return "side_only"
+                if north == None:
+                    return "end_only"
+                return #"log"
+        else:
+            if north == None:
+                if top == None:
+                    return "bottom_only"
+                if bottom == None:
+                    return "top_only"
+                return
+            return #"barrel"
+    else:
+        return "irregular"
+    
+class blockmodel_overlay:
+    """ 专门给overlay类型的方块模型，没有继承方块模型类，但是复制了一份代码过来。 """
+    def __init__(self,property:dict,texture:str):
+        sixfacetexture = gettexturebyproperty(property,texture)
+        self.top,self.bottom,self.north,self.south,self.west,self.east = sixfacetexture
+        self.evaluatedtype = evaluatefacesforoverlay(sixfacetexture)
+        if not self.evaluatedtype:
+            raise ValueError(f"从{property}获取到了没有作用于任何面的overlay方法")
+        self.parent = None
+    def generatedict(self) -> dict[str,str]:
+        pass
 
 class pngmcmeta:
     """ 对缝合到一起的数个贴图的png图片的外部数据文件 xxx.png.mcmeta """

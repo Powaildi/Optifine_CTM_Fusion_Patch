@@ -381,12 +381,10 @@ def matchblocks(match:dict,blockstates:dict,matched=[]):
         #补充命名空间
         name = addnamespace(name)
     variant = match.get("variant")
-    #print(blockstates["blocknames"])
     if name in blockstates["blocknames"]:
         index = blockstates["blocknames"].index(name)
         #得到打开的blockstate
         statement = blockstates["opened"][index]
-        print(blockstates["statepaths"][index])
         models = searchblockmodels(statement)
         if variant:
             for key in models.keys():

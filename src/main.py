@@ -18,11 +18,11 @@ def createfiles(propertyfile:Path,patchpath:Path,blockstates:dict,blockmodels:di
     method = property.get("method")
     
 
-    #获取匹配到的模型，matchTiles未验证
+    #获取匹配到的模型，matchTiles似乎可以
     matchedmodels = r.matchblockandtiles(property,blockstates,blockmodels,texturedict)
     #没有匹配到就不要生成图片了
     if not matchedmodels:
-        print(f"{propertyfile}没有匹配到模型，未创建图片")
+        print(f"{propertyfile} 没有匹配到模型，未创建图片")
         return propertyfile
     
     #生成图片的mcpath
@@ -43,15 +43,33 @@ def createfiles(propertyfile:Path,patchpath:Path,blockstates:dict,blockmodels:di
     #二重循环加递归，看着就感觉恐怖
     for matchedmodel in matchedmodels:
         temp = matchedmodel.get("model")
-        obj = matchedmodel["object"] = c.blockmodel(temp)
+        #获取打开的模型
+        obj = matchedmodel.get("object")
+        if not obj:
+            #没有就创建
+            obj = matchedmodel["object"] = c.blockmodel(temp)
         obj.evaluatetype(blockmodels)
-        #print(obj.__dict__)
+        
     
 
 
     #全部的贴图文件名称，都带有命名空间
     alltexture = texturedict.get("textures")
-    
+    #overlay方法有着完全不同的做法
+    if "overlay" in method:
+        obj = c.blockmodel_overlay(property,picmcpath)
+        #print(obj.__dict__)
+        #获取应该连接的方块
+        connectto = r.matchblockandtiles(property,blockstates,blockmodels,texturedict,True)
+        print(connectto)
+    #一般方法
+    else:
+        for matchedmodel in matchedmodels:
+            temp = matchedmodel.get("model")
+            obj = matchedmodel.get("object")
+            obj.modifytexture(property,picmcpath)
+        #print(obj.__dict__)
+
     """  
     #overlay方法有着完全不同的做法
     if method == "overlay":
@@ -163,19 +181,9 @@ def run(usetest:bool=False):
     #创建贴图路和方块模型列表
     overlaydict = {"names":[],"models":[]}
 
-    mismatched = [4, 6, 16, 19, 20, 21, 22, 26, 28, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 69, 71, 72]
-    """ 
-    mismatched = []
-
     for propertyfile in propertyfiles:
-        i = createfiles(propertyfile,patchpath,blockstates,blockmodels,overlaydict,texturedict)
-        if i in propertyfiles:
-            mismatched.append(propertyfiles.index(i))
+        createfiles(propertyfile,patchpath,blockstates,blockmodels,overlaydict,texturedict)
         
-    print(mismatched)
-    """
-    for i in mismatched:
-        createfiles(propertyfiles[i],patchpath,blockstates,blockmodels,overlaydict,texturedict)
         
 
     #createfiles2(patchpath,patchmodels)
