@@ -359,15 +359,29 @@ def evaluatefacesforoverlay(sixfacetexture:list[str]) -> str:
     else:
         return "irregular"
     
+def getconnections():
+    pass
+
+def decidemodel():
+    pass
+
 class blockmodel_overlay:
-    """ 专门给overlay类型的方块模型，没有继承方块模型类，但是复制了一份代码过来。 """
+    """ 专门给overlay类型的方块模型，没有继承方块模型类，但是复制了一份代码过来。
+        只能在初始化的时候给材质。
+        只支持connectBlocks """
     def __init__(self,property:dict,texture:str):
-        sixfacetexture = gettexturebyproperty(property,texture)
+        sixfacetexture = gettexturebyproperty(property,"#all")
         self.top,self.bottom,self.north,self.south,self.west,self.east = sixfacetexture
         self.evaluatedtype = evaluatefacesforoverlay(sixfacetexture)
         if not self.evaluatedtype:
             raise ValueError(f"从{property}获取到了没有作用于任何面的overlay方法")
-        self.parent = None
+        
+        self.type = "connecting"
+
+
+        self.connections = None
+        self.textures = {"all":texture}
+        self.parent,self.elements = None
     def generatedict(self) -> dict[str,str]:
         pass
 
@@ -411,13 +425,34 @@ class pngmcmeta:
         return dict
         
 
+
+def convertvariant(matchblock:dict) -> str | dict:
+    """ 将splitmatchblockvalues得到的方块属性转换为能被Fusion识别的形式 """
+    name = matchblock.get("name")
+    variant = matchblock.get("variant")
+    if not variant:
+        return name
+    else:
+        #这里没有测试过
+        dict = {"block":name,"properties":{}}
+        for singleproperty in variant.split(","):
+            key,value = singleproperty.split("=")
+            dict["properties"][key] = value
+        return dict
+
 class blockmodifier:
     """ 生成Fusion专属的Block modifier，用于Overlay。位于 assets/minecraft/fusion/model_modifiers/blocks """
-    def __init__(self,targets:list,mcpath:str):
-        self.targets = targets
-        self.mcpath = [mcpath]
-    def generatedict(self) -> dict[str,str]:
-        return {"targets":self.targets,"append":self.mcpath}
+    def __init__(self,property:dict,append:str):
+        """ 目前只支持matchBlocks """
+        self.targets = []
+        if property.get("matchBlocks"):
+            for match in property.get("matchBlocks"):
+                self.targets.append(convertvariant(match))
+
+        self.append = [append]
+
+    def generatedict(self) -> dict:
+        return {"targets":self.targets,"append":self.append}
 """ 
 保留备用
 class pngmcmeta:

@@ -436,9 +436,9 @@ def matchblockandtiles(property:dict,blockstates:dict,blockmodels:dict,texturedi
     return matched
 
 
-#根据读取的模型寻找对应的纹理变量
+#根据读取的模型寻找对应的纹理变量，未使用
 facesdict = {"top":[],"bottom":[],"sides":[],"north":[],"south":[],"east":[],"west":[]}
-def matchfaces(face:list[str],matchedmodel:dict,blockmodels:dict,matched:list):
+def matchfaceslegacy(face:list[str],matchedmodel:dict,blockmodels:dict,matched:list):
     """ 根据读取的模型寻找对应的纹理变量，不能应对faces=sides而模型中只有all的情况。特指东西南北方向会得到sides，写了all就全返回。
         faces从properties文件提取。
         对传入的matched进行修改。
@@ -457,7 +457,7 @@ def matchfaces(face:list[str],matchedmodel:dict,blockmodels:dict,matched:list):
     if parent in blockmodels["modelnames"]:
         index = blockmodels["modelnames"].index(parent)
         matchedmodel2 = blockmodels["opened"][index]
-        matchfaces(face,matchedmodel2,blockmodels,matched)
+        matchfaceslegacy(face,matchedmodel2,blockmodels,matched)
         
     
 

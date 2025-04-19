@@ -123,13 +123,23 @@ def matchmethodmapping(method:str,tiles:list):
         case "repeat":
             #这个continuous在layout中并不存在，而是 "type": "continuous"
             return "continuous",tiles
-        case "overlay":
-            return "overlay",mapping(tiles,map_overlay)
         case "random":
              #这个random在layout中并不存在，而是 "type": "random"
             return "random",tiles
+        case "fixed":
+            return "random",tiles
+        case "overlay":
+            return "overlay",mapping(tiles,map_overlay)
+        case "overlay_ctm":
+            return "full",mapping(tiles,map_full)
+        case "overlay_random":
+            return "random",tiles
+        case "overlay_repeat":
+            return "continuous",tiles
+        case "overlay_fixed":
+            return "random",tiles
         case _:
-            #top overlay_ctm overlay_random overlay_repeat overlay_fixed
+            #top 因为没见过任何类似的
             raise ValueError(f"暂时不支持{method}方法")
 
 def getpicturepath(propertypath:Path,tiles:list) ->list :

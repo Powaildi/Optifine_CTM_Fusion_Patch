@@ -19,11 +19,27 @@ def createfiles(propertyfile:Path,patchpath:Path,blockstates:dict,blockmodels:di
     
 
     #获取匹配到的模型，matchTiles似乎可以
-    matchedmodels = r.matchblockandtiles(property,blockstates,blockmodels,texturedict)
-    #没有匹配到就不要生成图片了
-    if not matchedmodels:
-        print(f"{propertyfile} 没有匹配到模型，未创建图片")
-        return propertyfile
+    if "overlay" in method:
+        if property.get("matchTiles"):
+            print(f"{propertyfile} 暂时不支持overlay的matchTiles，未创建图片")
+            return
+        else:
+            pass
+    else:
+        matchedmodels = r.matchblockandtiles(property,blockstates,blockmodels,texturedict)
+        #没有匹配到就不要生成图片了
+        if not matchedmodels:
+            print(f"{propertyfile} 没有匹配到模型，未创建图片")
+            return propertyfile
+        #打开并初始化匹配到的模型，执行一小部分功能
+        for matchedmodel in matchedmodels:
+            temp = matchedmodel.get("model")
+            #获取打开的模型
+            obj = matchedmodel.get("object")
+            if not obj:
+            #没有就创建
+                obj = matchedmodel["object"] = c.blockmodel(temp)
+            obj.evaluatetype(blockmodels)
     
     #生成图片的mcpath
     picmcpath = f.pathtomcpath(propertyfile)
@@ -37,31 +53,33 @@ def createfiles(propertyfile:Path,patchpath:Path,blockstates:dict,blockmodels:di
     #生成文件夹
     picpath.mkdir(parents=True,exist_ok=True)
 
-    #修改面的名称
-    faces = property.get("faces")
-    matchedtexturekeys = []
-    #二重循环加递归，看着就感觉恐怖
-    for matchedmodel in matchedmodels:
-        temp = matchedmodel.get("model")
-        #获取打开的模型
-        obj = matchedmodel.get("object")
-        if not obj:
-            #没有就创建
-            obj = matchedmodel["object"] = c.blockmodel(temp)
-        obj.evaluatetype(blockmodels)
-        
     
-
-
-    #全部的贴图文件名称，都带有命名空间
-    alltexture = texturedict.get("textures")
+    
+        
+    #修改模型中的属性
     #overlay方法有着完全不同的做法
     if "overlay" in method:
-        obj = c.blockmodel_overlay(property,picmcpath)
-        #print(obj.__dict__)
         #获取应该连接的方块
-        connectto = r.matchblockandtiles(property,blockstates,blockmodels,texturedict,True)
-        print(connectto)
+        obj = c.blockmodel_overlay(property,picmcpath)
+        
+        #给个路径和名字
+        modelpath = patchpath / "assets" / "minecraft" / "models" / "overlay"
+        modelpath.mkdir(parents=True,exist_ok=True)
+        modelpath = modelpath / f"{picname}.json"
+        modelname = f"minecraft:overlay/{picname}"
+        #塞进overlaydict
+        overlaydict["names"].append(modelname)
+        overlaydict["paths"].append(modelpath)
+        overlaydict["models"].append(obj)
+        #创建Fusion block modifier
+        modifier = c.blockmodifier(property,modelname)
+        modifierpath = patchpath / "assets" / "minecraft" / "fusion" / "model_modifiers" / "blocks"
+        modifierpath.mkdir(parents=True,exist_ok=True)
+        modifierfilepath = modifierpath / f"{picname}.json"
+        with modifierfilepath.open("w") as modifierfile:
+            modifierfile.write(json.dumps(modifier.generatedict()))
+            modifierfile.close()
+
     #一般方法
     else:
         for matchedmodel in matchedmodels:
@@ -179,11 +197,12 @@ def run(usetest:bool=False):
     r.openblockstates(blockstates)
     
     #创建贴图路和方块模型列表
-    overlaydict = {"names":[],"models":[]}
+    overlaydict = {"names":[],"paths":[],"models":[]}
 
     for propertyfile in propertyfiles:
         createfiles(propertyfile,patchpath,blockstates,blockmodels,overlaydict,texturedict)
         
+    print(overlaydict)
         
 
     #createfiles2(patchpath,patchmodels)
