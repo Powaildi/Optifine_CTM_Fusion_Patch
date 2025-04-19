@@ -10,7 +10,7 @@ import functions.Decorator as d
 
 
 def createfiles(propertyfile:Path,patchpath:Path,blockstates:dict,blockmodels:dict,overlaydict:dict,texturedict:dict={"textures":list[str],"modifyto":list,"affectedmodels":list[dict]}):
-    """ 核心组件的集合体，为一个property文件创建连接纹理贴图和pngmcmeta.
+    """ 核心组件的集合体，为一个property文件创建连接纹理贴图和pngmcmeta，对于overlay类型还会生成fusion model_modifier。
         修改传入的texturedict,overlaydict。
         会在textures文件夹里面创建子文件夹"""
     #读取基本属性
@@ -41,21 +41,38 @@ def createfiles(propertyfile:Path,patchpath:Path,blockstates:dict,blockmodels:di
                 obj = matchedmodel["object"] = c.blockmodel(temp)
             obj.evaluatetype(blockmodels)
     
+    #图片
     #生成图片的mcpath
     picmcpath = f.pathtomcpath(propertyfile)
     namespace,id = r.seperatenamespace(picmcpath,False)
     picpath = patchpath / "assets" / namespace / "textures" / id
-    #id里面有多层，生成的类似于assets\minecraft\textures\ctm\acacia_log\acacia_log，由于最后一个是文件名，路径应该退一层
+    #id里面有多层，生成的类似于assets\minecraft\textures\ctm\acacia_log\acacia_log，由于最后一个是文件夹，又是无后缀文件名，路径应该退一层
     #到时候的图片和属性文件名称： f"{picname}.png"
     picname = picpath.name
     #退一层
     picpath = picpath.parent
     #生成文件夹
     picpath.mkdir(parents=True,exist_ok=True)
+    #生成图片
+    layout,width,height,picture,normal,specular = s.createstitchedtexture(propertyfile,property)
+    picture.save(picpath / f"{picname}.png")
+    if normal:
+        normal.save(picpath / f"{picname}_n.png")
+    if specular:
+        specular.save(picpath / f"{picname}_s.png")
+    
+    #生成xxx.png.mcmeta，使用刚刚的layout,width,height
+    #对于带有法线和高光贴图的图片，它们是否也需要单独创建一个呢？还没有测试
+    tinting = property.get("tintIndex",-1)
+    #给草染色，但是别的染色类型会被无视
+    tinting = None if tinting == -1 else "biome_grass"
+    picmcmeta = c.pngmcmeta(layout,height,width,tinting)
+    mcmetapath = picpath / f"{picname}.png.mcmeta"
+    with mcmetapath.open("w") as mcmetafile:
+        mcmetafile.write(json.dumps(picmcmeta.generatedict()))
+    
 
-    
-    
-        
+
     #修改模型中的属性
     #overlay方法有着完全不同的做法
     if "overlay" in method:

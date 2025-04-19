@@ -26,6 +26,8 @@ NeoForge 1.20.1的Fusion只有1.1.1，试试Forge版
 """
 
 
+     
+
 class blockmodellegacy:
     """ 老的方块模型类，仅供参考 """
     def __init__(self,reference:dict={},layout:str="full",faces:list[str]=[],mcpath:str=""):
@@ -116,6 +118,15 @@ class blockmodellegacy:
         return self.reference
 
 
+def decidefusionmodeltype(layout:str):
+    """ 根据layout决定采用什么连接类型 """
+    if layout == "continuous" or layout == "random":
+         return "base"
+    else:
+        return "connecting"
+
+def addconnections():
+    pass
 
 #内部函数，blockmodels里会用到
 def getsixfacetexture(elements:list[dict]) -> list[str]:
@@ -185,7 +196,7 @@ class blockmodel:
     方块模型文件，会生成能被Fusion识别的形式 xxx.json
     必须提供原始方块模型字典。
     """
-    def __init__(self,reference:dict):
+    def __init__(self,reference:dict,layout:str):
         #dict 对照用，不要修改这个字典的内容
         self.reference = reference
 
@@ -200,6 +211,9 @@ class blockmodel:
         self.elements = reference.get("elements")
         #dict （默认所有显示模式无变换）模型在不同显示模式下的渲染变换。
         self.display = reference.get("display")
+        #str fusion识别的模型的一个属性
+        self.type = decidefusionmodeltype(layout)
+
 
         #自定义内容
         #六个面，从原模型文件中拿来，通常应该是纹理变量，如 #texture，到时候用于检测
@@ -359,8 +373,30 @@ def evaluatefacesforoverlay(sixfacetexture:list[str]) -> str:
     else:
         return "irregular"
     
-def getconnections():
-    pass
+
+
+def addconnections(texture:str,is_same_state:bool=False,is_face_visible:bool=False,match_block:dict=None) -> dict:
+    """ 为纹理路径临时添加连接方法，需要在后续转化为纹理变量。
+        不能完全归纳所需的情况。 """
+    predicate1 = "is_same_state" if is_same_state else "is_same_block"
+    predicate2 = "is_face_visible" if is_face_visible else None
+    predicate3 = None
+    if match_block:
+        predicate3 = convertvariant(match_block)
+        if type(predicate3) == dict:
+            predicate3["type"] = "match_state"
+        else:
+            predicate3 = {"type":"match_block","block":predicate3}
+
+    if predicate1 and predicate2:
+        dict1 = {"type":"and","predicates":[{"type":predicate1},{"type":predicate2}]}
+    elif predicate2 and predicate3:
+        dict1 = {"type":"and","predicates":[{"type":predicate2},predicate3]}
+    elif predicate3:
+        dict1 = predicate3
+    else:
+        dict1 = {"type":predicate1}
+    return {"texture":texture,"predicates":{dict1}}
 
 def decidemodel():
     pass
@@ -368,22 +404,65 @@ def decidemodel():
 class blockmodel_overlay:
     """ 专门给overlay类型的方块模型，没有继承方块模型类，但是复制了一份代码过来。
         只能在初始化的时候给材质。
-        只支持connectBlocks """
-    def __init__(self,property:dict,texture:str):
+        只支持connectBlocks。
+        使用了convertvariant(...)"""
+    def __init__(self,property:dict,texture:str,layout:str):
         sixfacetexture = gettexturebyproperty(property,"#all")
         self.top,self.bottom,self.north,self.south,self.west,self.east = sixfacetexture
         self.evaluatedtype = evaluatefacesforoverlay(sixfacetexture)
         if not self.evaluatedtype:
             raise ValueError(f"从{property}获取到了没有作用于任何面的overlay方法")
         
-        self.type = "connecting"
+        #str fusion识别的模型的一个属性
+        self.type = decidefusionmodeltype(layout)
+
+        #不能完全等同于Fusion里的connections
+        self.tempconnections = addconnections()
+        if layout == "overlay":
+            pass
+        else:
+            #overlay_ctm之类的
+            pass
 
 
-        self.connections = None
-        self.textures = {"all":texture}
-        self.parent,self.elements = None
+        self.textures = {"particle": "#all","all":texture}
+        self.parent = None
+        self.elements = None
+    def decideelements(self):
+        match self.evaluatedtype:
+            case "cube":
+                self.parent = "block/cube_all"
+            case "side_only":
+                #自定义模型，需要专门生成
+                self.parent = "overlay/side_only"
+            case "top_only":
+                #自定义模型，需要专门生成
+                self.parent = "overlay/top_only"
+            case _:
+                #比上面写的少，其实可以优化上面的evaluatefacesforoverlay(sixfacetexture)
+                self.elements = [{"from": [ 0, 0, 0 ],"to": [ 16, 16, 16 ],"faces": {}}]
+                if self.top:
+                    self.elements[0]["faces"]["up"] = { "texture": "#all", "cullface": "up" }
+                if self.bottom:
+                    self.elements[0]["faces"]["down"] = { "texture": "#all", "cullface": "down" }
+                if self.north:
+                    self.elements[0]["faces"]["north"] = { "texture": "#all", "cullface": "north" }
+                if self.south:
+                    self.elements[0]["faces"]["south"] = { "texture": "#all", "cullface": "south" }
+                if self.west:
+                    self.elements[0]["faces"]["west"] = { "texture": "#all", "cullface": "west" }
+                if self.east:
+                    self.elements[0]["faces"]["east"] = { "texture": "#all", "cullface": "east" }
     def generatedict(self) -> dict[str,str]:
-        pass
+        dict1 = {"loader":"fusion:model","type":self.type,"textures":self.textures,"connections":self.tempconnections["predicates"]}
+        if self.parent:
+            dict1["parent"] = self.parent
+        if self.elements:
+            dict1["elements"] = self.elements
+        return dict1
+
+
+
 
 class pngmcmeta:
     """ 对缝合到一起的数个贴图的png图片的外部数据文件 xxx.png.mcmeta """
