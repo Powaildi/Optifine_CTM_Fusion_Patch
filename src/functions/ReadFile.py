@@ -342,16 +342,24 @@ def searchblockmodels(statement:dict) -> dict:
     """ 从blockstates的文件里找出所有的模型，返回一个字典 """
     result = {}
     variants = statement.get("variants")
-    for key in variants.keys():
-        result[key] = []
-        values = variants[key]
-        if type(values) == dict:
-            #values只有一个字典
-            result[key].append(values.get("model"))
-        else:
-            #values是一个字典列表
-            for value in values:
-                result[key].append(value.get("model"))
+    multipart = statement.get("multipart")
+    if variants:
+        for key in variants.keys():
+            result[key] = []
+            values = variants[key]
+            if type(values) == dict:
+                #values只有一个字典
+                result[key].append(values.get("model"))
+            else:
+                #values是一个字典列表
+                for value in values:
+                    result[key].append(value.get("model"))
+    elif multipart:
+        result["multipart"] = []
+        for part in multipart:
+            apply = part.get("apply")
+            result["multipart"].append(apply.get("model"))
+
     return result
         
 def removeduplications(input:list) -> list:
@@ -361,17 +369,24 @@ def removeduplications(input:list) -> list:
         if x not in list:
             list.append(x)
     return list
+   
+
 
 def matchblocks(match:dict,blockstates:dict,matched=[]):
     """ 输入matchBlocks里面的一个元素
         根据输入的属性，在matched里添加模型，模型是mcpath。
         支持特化方块属性 """
     name = match.get("name")
+    if name:
+        #补充命名空间
+        name = addnamespace(name)
     variant = match.get("variant")
+    #print(blockstates["blocknames"])
     if name in blockstates["blocknames"]:
         index = blockstates["blocknames"].index(name)
         #得到打开的blockstate
         statement = blockstates["opened"][index]
+        print(blockstates["statepaths"][index])
         models = searchblockmodels(statement)
         if variant:
             for key in models.keys():
@@ -407,6 +422,8 @@ def matchblockandtiles(property:dict,blockstates:dict,blockmodels:dict,texturedi
             matchblocks(match,blockstates,matchednames)
             #去除重复元素
             matchednames = removeduplications(matchednames)
+        if not matchednames:
+            print(match)
         for name in matchednames:
             #补充命名空间
             name = addnamespace(name)
@@ -418,7 +435,6 @@ def matchblockandtiles(property:dict,blockstates:dict,blockmodels:dict,texturedi
             matchtiles(match,texturedict,matched)
     else:
         pass
-
     return matched
 
 

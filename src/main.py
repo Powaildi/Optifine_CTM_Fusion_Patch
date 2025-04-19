@@ -6,7 +6,7 @@ import classes.JsonFileClasses as c
 import functions.FolderOperation as f
 import functions.ReadFile as r
 import functions.CreateStitchedTexture as s
-
+import functions.Decorator as d
 
 
 def createfiles(propertyfile:Path,patchpath:Path,blockstates:dict,blockmodels:dict,overlaydict:dict,texturedict:dict={"textures":list[str],"modifyto":list,"affectedmodels":list[dict]}):
@@ -23,7 +23,7 @@ def createfiles(propertyfile:Path,patchpath:Path,blockstates:dict,blockmodels:di
     #没有匹配到就不要生成图片了
     if not matchedmodels:
         print(f"{propertyfile}没有匹配到模型，未创建图片")
-        return
+        return propertyfile
     
     #生成图片的mcpath
     picmcpath = f.pathtomcpath(propertyfile)
@@ -45,7 +45,7 @@ def createfiles(propertyfile:Path,patchpath:Path,blockstates:dict,blockmodels:di
         temp = matchedmodel.get("model")
         obj = matchedmodel["object"] = c.blockmodel(temp)
         obj.evaluatetype(blockmodels)
-        print(obj.__dict__)
+        #print(obj.__dict__)
     
 
 
@@ -157,17 +157,25 @@ def run(usetest:bool=False):
     texturedict = r.extracttexturepaths(blockmodels)
 
     blockstates = f.findblockstates(originalpath)
-    blockstates = f.findblockstates(originalpath,blockstates)
+    blockstates = f.findblockstates(referencepath,blockstates)
     r.openblockstates(blockstates)
     
     #创建贴图路和方块模型列表
-
-    
-
     overlaydict = {"names":[],"models":[]}
+
+    mismatched = [4, 6, 16, 19, 20, 21, 22, 26, 28, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 69, 71, 72]
+    """ 
+    mismatched = []
+
     for propertyfile in propertyfiles:
-        createfiles(propertyfile,patchpath,blockstates,blockmodels,overlaydict,texturedict)
+        i = createfiles(propertyfile,patchpath,blockstates,blockmodels,overlaydict,texturedict)
+        if i in propertyfiles:
+            mismatched.append(propertyfiles.index(i))
         
+    print(mismatched)
+    """
+    for i in mismatched:
+        createfiles(propertyfiles[i],patchpath,blockstates,blockmodels,overlaydict,texturedict)
         
 
     #createfiles2(patchpath,patchmodels)
