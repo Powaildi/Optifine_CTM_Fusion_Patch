@@ -167,7 +167,7 @@ def run(usetest:bool=False):
     overlaydict = {"names":[],"models":[]}
     for propertyfile in propertyfiles:
         createfiles(propertyfile,patchpath,blockstates,blockmodels,overlaydict,texturedict)
-        break
+        
         
 
     #createfiles2(patchpath,patchmodels)

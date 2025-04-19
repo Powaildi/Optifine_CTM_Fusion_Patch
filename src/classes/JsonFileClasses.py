@@ -139,8 +139,12 @@ def changesixfacetexture(textures:dict,sixfacetexture:list[str]):
             index = sixfacetexture.index("#" + key)
             sixfacetexture[index] = value
     
+recursioncache = {}#"parent":sixfacetexture
 
 def getsixfacestexture2(parent:str,blockmodels:dict,sixfacetexture:list[str]) -> list[str]:
+    """ 递归寻找方块每个面的信息，递归没有优化，将会大量重复执行 """
+    global recursioncache
+
     if parent in blockmodels["modelnames"]:
         index = blockmodels["modelnames"].index(parent)
         parentmodel = blockmodels["opened"][index]
