@@ -129,6 +129,7 @@ def matchmethodmapping(method:str,tiles:list):
              #这个random在layout中并不存在，而是 "type": "random"
             return "random",tiles
         case _:
+            #top overlay_ctm overlay_random overlay_repeat overlay_fixed
             raise ValueError(f"暂时不支持{method}方法")
 
 def getpicturepath(propertypath:Path,tiles:list) ->list :
@@ -137,6 +138,11 @@ def getpicturepath(propertypath:Path,tiles:list) ->list :
     for name in tiles:
         if name:
             picturepaths.append(propertypath.with_name(f"{name}.png"))
+            if "default" in name:
+                raise ValueError(f"{propertypath}暂时不支持在tiles里写default")
+            if "skip" in name:
+                print(f"{propertypath}存在skip")
+                picturepaths.append(False)
         else:
             picturepaths.append(False)
     return picturepaths
@@ -225,7 +231,7 @@ def createstitchedtexture(propertypath:Path,propertydict:dict):
         case "random":
             pass
     
-    #获取文件路径
+    #获取文件路径，需要处理<default>和<skip>
     picturepaths = getpicturepath(propertypath,tiles)
     #法线贴图和高光贴图还没有测试
     tiles_n = []
