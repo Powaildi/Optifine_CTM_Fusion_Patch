@@ -24,22 +24,14 @@ def createfiles(propertyfile:Path,patchpath:Path,blockstates:dict,blockmodels:di
             print(f"{propertyfile} 暂时不支持overlay的matchTiles，未创建图片")
             return
         else:
-            pass
+            matchedmodels = []
     else:
         matchedmodels = r.matchblockandtiles(property,blockstates,blockmodels,texturedict)
         #没有匹配到就不要生成图片了
         if not matchedmodels:
             print(f"{propertyfile} 没有匹配到模型，未创建图片")
             return propertyfile
-        #打开并初始化匹配到的模型，执行一小部分功能
-        for matchedmodel in matchedmodels:
-            temp = matchedmodel.get("model")
-            #获取打开的模型
-            obj = matchedmodel.get("object")
-            if not obj:
-            #没有就创建
-                obj = matchedmodel["object"] = c.blockmodel(temp)
-            obj.evaluatetype(blockmodels)
+        
     
     #图片
     #生成图片的mcpath
@@ -71,13 +63,21 @@ def createfiles(propertyfile:Path,patchpath:Path,blockstates:dict,blockmodels:di
     with mcmetapath.open("w") as mcmetafile:
         mcmetafile.write(json.dumps(picmcmeta.generatedict()))
     
-
+    #打开并初始化匹配到的模型，执行一小部分功能
+    for matchedmodel in matchedmodels:
+        temp = matchedmodel.get("model")
+        #获取打开的模型
+        obj = matchedmodel.get("object")
+        if not obj:
+            #没有就创建
+            obj = matchedmodel["object"] = c.blockmodel(temp,layout)
+        obj.evaluatetype(blockmodels)
 
     #修改模型中的属性
     #overlay方法有着完全不同的做法
     if "overlay" in method:
         #获取应该连接的方块
-        obj = c.blockmodel_overlay(property,picmcpath)
+        obj = c.blockmodel_overlay(property,picmcpath,layout)
         
         #给个路径和名字
         modelpath = patchpath / "assets" / "minecraft" / "models" / "overlay"
@@ -219,7 +219,8 @@ def run(usetest:bool=False):
     for propertyfile in propertyfiles:
         createfiles(propertyfile,patchpath,blockstates,blockmodels,overlaydict,texturedict)
         
-    print(overlaydict)
+    for model in overlaydict["models"]:
+        print(model.generatedict())
         
 
     #createfiles2(patchpath,patchmodels)

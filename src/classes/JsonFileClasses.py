@@ -125,8 +125,6 @@ def decidefusionmodeltype(layout:str):
     else:
         return "connecting"
 
-def addconnections():
-    pass
 
 #内部函数，blockmodels里会用到
 def getsixfacetexture(elements:list[dict]) -> list[str]:
@@ -396,7 +394,7 @@ def addconnections(texture:str,is_same_state:bool=False,is_face_visible:bool=Fal
         dict1 = predicate3
     else:
         dict1 = {"type":predicate1}
-    return {"texture":texture,"predicates":{dict1}}
+    return {"texture":texture,"predicates":dict1}
 
 def decidemodel():
     pass
@@ -415,9 +413,17 @@ class blockmodel_overlay:
         
         #str fusion识别的模型的一个属性
         self.type = decidefusionmodeltype(layout)
-
+        if layout == "overlay":
+            #不完全归纳，会出问题
+            matchblocks = property.get("connectBlocks")
+        else:
+            #不完全归纳，会出问题
+            matchblocks = property.get("matchBlocks")
         #不能完全等同于Fusion里的connections
-        self.tempconnections = addconnections()
+        self.connections = []
+        for matchblock in matchblocks:
+            temp = addconnections(texture,is_face_visible=True,match_block=matchblock)
+            self.connections.append(temp.get("predicates"))
         if layout == "overlay":
             pass
         else:
@@ -454,7 +460,7 @@ class blockmodel_overlay:
                 if self.east:
                     self.elements[0]["faces"]["east"] = { "texture": "#all", "cullface": "east" }
     def generatedict(self) -> dict[str,str]:
-        dict1 = {"loader":"fusion:model","type":self.type,"textures":self.textures,"connections":self.tempconnections["predicates"]}
+        dict1 = {"loader":"fusion:model","type":self.type,"textures":self.textures,"connections":self.connections}
         if self.parent:
             dict1["parent"] = self.parent
         if self.elements:
