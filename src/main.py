@@ -230,7 +230,7 @@ def run(usetest:bool=False):
     overlaydict["paths"].append(modelpath/"top_only.json")
     overlaydict["models"].append(c.top_only)
 
-
+    print(c.top_only.generatedict())
 
     #createfiles2(patchpath,patchmodels)
 

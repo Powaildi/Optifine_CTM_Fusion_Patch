@@ -120,7 +120,7 @@ class blockmodellegacy:
 
 def decidefusionmodeltype(layout:str):
     """ 根据layout决定采用什么连接类型 """
-    if layout == "continuous" or layout == "random":
+    if layout == "continuous" or layout == "random" or not layout:
          return "base"
     else:
         return "connecting"
@@ -386,14 +386,20 @@ def addconnections(texture:str,is_same_state:bool=False,is_face_visible:bool=Fal
         else:
             predicate3 = {"type":"match_block","block":predicate3}
 
-    if predicate1 and predicate2:
-        dict1 = {"type":"and","predicates":[{"type":predicate1},{"type":predicate2}]}
-    elif predicate2 and predicate3:
-        dict1 = {"type":"and","predicates":[{"type":predicate2},predicate3]}
-    elif predicate3:
-        dict1 = predicate3
+    if predicate3:
+        if predicate2:
+            #2,3
+            dict1 = {"type":"and","predicates":[{"type":predicate2},predicate3]}
+        else:
+            #3
+            dict1 = predicate3
     else:
-        dict1 = {"type":predicate1}
+        if predicate2:
+            #1,2
+            dict1 = {"type":"and","predicates":[{"type":predicate1},{"type":predicate2}]}  
+        else:
+            #1
+            dict1 = {"type":predicate1}
     return {"texture":texture,"predicates":dict1}
 
 def decidemodel():
