@@ -227,6 +227,49 @@ def evaluatefaces(sixfacetexture:list[str]) -> str:
     else:
         return "irregular"
  
+def can_transform(a, b) -> dict | bool:
+    """ 生成从a到b的映射字典，如果不能就返回False
+        非常好deepseek，爱来自抛瓦 """
+    if len(a) != len(b):
+        return False
+
+    # 检查每个元素映射是否一致
+    mapping = {}
+    for x, y in zip(a, b):
+        if x in mapping:
+            if mapping[x] != y:
+                return False
+        else:
+            mapping[x] = y
+
+    # 过滤掉无需修改的项（x == y）
+    mapping = {x: y for x, y in mapping.items() if x != y}
+
+    # 检测是否存在循环依赖
+    visited = set()
+    in_stack = set()
+
+    def has_cycle(node):
+        if node not in mapping:
+            return False
+        if node in in_stack:
+            return True
+        if node in visited:
+            return False
+        visited.add(node)
+        in_stack.add(node)
+        if has_cycle(mapping[node]):
+            return True
+        in_stack.remove(node)
+        return False
+
+    for node in mapping:
+        if node not in visited:
+            if has_cycle(node):
+                return False
+    return mapping
+
+
 class blockmodel:
     """ 
     方块模型文件，会生成能被Fusion识别的形式 xxx.json
@@ -325,6 +368,17 @@ class blockmodel:
             self.west2 = texture
             self.east2 = texture
 
+    def maptexture(self,mapping:dict):
+        """ 配合 can_transform 使用 """
+        for a,b in mapping.items():
+            for key,value in self.textures.items():
+                self.textures[key] = b if ("#" + key) == a else value
+
+    def addctmtotexture(self):
+        """ 在所有贴图都处理完之后再用 """
+        mapping = can_transform([self.top,self.bottom,self.north,self.south,self.west,self.east],[self.top2,self.bottom2,self.north2,self.south2,self.west2,self.east2])
+        if mapping:
+            self.maptexture()
     def evaluatetargettype(self):
         """ 在所有贴图都处理完之后再用 """
         self.targettype = evaluatefaces([self.top2,self.bottom2,self.north2,self.south2,self.west2,self.east2])
