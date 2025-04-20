@@ -162,7 +162,7 @@ def changesixfacetexture(textures:dict,sixfacetexture:list[str]):
 #会在其他地方用到
 detectresult = {}#"parent":(sixfacetexture,
 
-def recursivelydetectblock(name:str,blockmodels:dict,sixfacetexture:list[str],isfullblock:bool) -> tuple[list[str],bool,str]:
+def recursivelydetectblock(name:str,blockmodels:dict,sixfacetexture:list[str],isfullblock:bool,changebytexture:bool=False) -> tuple[list[str],bool,str]:
     """ 递归寻找方块模型的信息，返回六个面的信息，模型是否是完整方块（从[0,0,0]到[16,16,16])，模型是六个面相同/类似于原木/类似于桶/类似于工作台。 """
     global detectresult
     #初始化
@@ -190,22 +190,24 @@ def recursivelydetectblock(name:str,blockmodels:dict,sixfacetexture:list[str],is
                 sixfacetexture = sixfacetexture.copy()
             else:
                 #进行递归
-                sixfacetexture,isfullblock,evaluatedtype = recursivelydetectblock(parent,blockmodels,sixfacetexture,isfullblock)
+                sixfacetexture,isfullblock,evaluatedtype = recursivelydetectblock(parent,blockmodels,sixfacetexture,isfullblock,True)
 
         #这里开始会修改传入的列表，因此返回的时候需要返回备份，防止存储的结果被修改
         if elements:
             isfullblock = getisfullblock(elements)
             sixfacetexture = getsixfacetexture(elements)
             
-        if textures:
+        if changebytexture and textures:
             print(sixfacetexture)
             changesixfacetexture(textures,sixfacetexture)
             print(sixfacetexture)
             print("\n")
-        if not evaluatedtype:
-            evaluatedtype = evaluatefaces(sixfacetexture)
+
+        evaluatedtype = evaluatefaces(sixfacetexture)
         #存储结果
-        detectresult[name] = (sixfacetexture,isfullblock,evaluatedtype)
+        if changebytexture:
+            #没有通过textures再次赋值的元素被直接引用会出问题，而通过textures再次赋值的不能体现出模型的修改潜力，参考工作台。
+            detectresult[name] = (sixfacetexture,isfullblock,evaluatedtype)
     #后面的代码（其实也在前面）会修改传入的列表，返回的时候需要返回备份，防止存储的结果被修改
     return sixfacetexture.copy(),isfullblock,evaluatedtype
 
@@ -326,6 +328,22 @@ class blockmodel:
     def evaluatetargettype(self):
         """ 在所有贴图都处理完之后再用 """
         self.targettype = evaluatefaces([self.top2,self.bottom2,self.north2,self.south2,self.west2,self.east2])
+        
+        if self.targettype == self.evaluatetargettype:
+            pass
+        else:
+            if self.isfullblock:
+                match [self.evaluatedtype,self.targettype]:
+                    case ["cube","log"]:
+                        pass
+                    case ["cube","barrel"]:
+                        pass
+                    case ["log","barrel"]:
+                        pass
+            else:
+                
+                pass
+
 
 
 
