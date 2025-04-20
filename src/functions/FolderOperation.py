@@ -63,7 +63,6 @@ def pathtomcpath(path:Path) -> str:
     return mcpath
 
 #下面这两个很像，分别会使用2次
-@d.evaluatetime
 def findmodelfiles(folder_path:Path,dict:dict={"modelnames":[],"modelpaths":[]}) -> dict[str:list]:
     """ 核心组件之一，创建一个包含了所有方块模型文件的字典。"modelnames"是mcpath """
     if not folder_path.is_dir():
@@ -97,7 +96,6 @@ def findmodelfiles(folder_path:Path,dict:dict={"modelnames":[],"modelpaths":[]})
 
     return dict
 
-@d.evaluatetime
 def findblockstates(folder_path:Path,dict:dict={"blocknames":[],"statepaths":[]}) -> dict[str:list]:
     """ 创建一个包含了所有方块定义文件的字典"""
     if not folder_path.is_dir():

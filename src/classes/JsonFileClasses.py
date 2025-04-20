@@ -143,6 +143,14 @@ def getsixfacetexture(elements:list[dict]) -> list[str]:
 
     return [top,bottom,north,south,west,east]
 
+def getisfullblock(elements:list[dict]) -> bool:
+    for element in elements:
+        #其实不是循环，因为循环进行一轮就必定返回
+        fr = element.get("from")
+        to = element.get("to")
+        if fr == [ 0, 0, 0 ] and to == [ 16, 16, 16 ]:
+            return True
+        return False
 def changesixfacetexture(textures:dict,sixfacetexture:list[str]):
     for key,value in textures.items():
         #value有#，而key没有，要加一下
@@ -152,9 +160,10 @@ def changesixfacetexture(textures:dict,sixfacetexture:list[str]):
     
 recursioncache = {}#"parent":sixfacetexture
 
-def getsixfacestexture2(parent:str,blockmodels:dict,sixfacetexture:list[str]) -> list[str]:
+def getsixfacestexture2(parent:str,blockmodels:dict,sixfacetexture:list[str]) -> tuple[list[str],bool]:
     """ 递归寻找方块每个面的信息，递归没有优化，将会大量重复执行 """
     global recursioncache
+    isfullblock = True
 
     if parent in blockmodels["modelnames"]:
         index = blockmodels["modelnames"].index(parent)
@@ -166,12 +175,14 @@ def getsixfacestexture2(parent:str,blockmodels:dict,sixfacetexture:list[str]) ->
         parent = modelinside.get("parent")
         if parent:
             parent = r.addnamespace(parent)
-            sixfacetexture = getsixfacestexture2(parent,blockmodels,sixfacetexture)
+            #进行递归
+            sixfacetexture,isfullblock = getsixfacestexture2(parent,blockmodels,sixfacetexture)
         if elements:
+            isfullblock = getisfullblock(elements)
             sixfacetexture = getsixfacetexture(elements)
         if textures:    
             changesixfacetexture(textures,sixfacetexture)
-    return sixfacetexture
+    return sixfacetexture,isfullblock
 
 
 
@@ -214,6 +225,7 @@ class blockmodel:
 
 
         #自定义内容
+        self.isfullblock = True
         #六个面，从原模型文件中拿来，通常应该是纹理变量，如 #texture，到时候用于检测
         self.top = None
         self.bottom = None
@@ -245,7 +257,7 @@ class blockmodel:
             sixfacetexture = getsixfacetexture(self.elements)
         else:
             sixfacetexture = []
-            sixfacetexture = getsixfacestexture2(self.parent,blockmodels,sixfacetexture)
+            sixfacetexture,self.isfullblock = getsixfacestexture2(self.parent,blockmodels,sixfacetexture)
 
         self.evaluatedtype = evaluatefaces(sixfacetexture)
         self.top,self.bottom,self.north,self.south,self.west,self.east = sixfacetexture
@@ -488,6 +500,9 @@ top_only = blockmodel_overlay(
     {"faces":["top"]},None,None,
     [{"from": [ 0, 0, 0 ],"to": [ 16, 16, 16 ],
       "faces": {"up": { "texture": "#all", "cullface": "up" }}}])
+
+
+
 
 class pngmcmeta:
     """ 对缝合到一起的数个贴图的png图片的外部数据文件 xxx.png.mcmeta """

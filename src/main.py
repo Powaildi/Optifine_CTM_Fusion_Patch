@@ -170,7 +170,7 @@ def createfiles2(patchpath:Path,patchmodels:dict):
             f.write(text)
 
 
-
+@d.evaluatetime
 def run(usetest:bool=False):
     """ 运行一次就生成所有文件 """
     if usetest:
@@ -230,7 +230,7 @@ def run(usetest:bool=False):
     overlaydict["paths"].append(modelpath/"top_only.json")
     overlaydict["models"].append(c.top_only)
 
-    print(c.top_only.generatedict())
+    print(c.recursioncache)
 
     #createfiles2(patchpath,patchmodels)
 
