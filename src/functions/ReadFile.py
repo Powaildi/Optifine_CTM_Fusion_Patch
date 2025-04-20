@@ -409,6 +409,7 @@ def matchblockandtiles(property:dict,blockstates:dict,blockmodels:dict,texturedi
     matchBlocks = property.get("matchBlocks")
     matchTiles = property.get("matchTiles")
 
+    #不使用，在以后可以删
     if isConnectBlcockTiles:
         matchBlocks = property.get("connectBlocks")
         matchTiles = property.get("connectTiles")

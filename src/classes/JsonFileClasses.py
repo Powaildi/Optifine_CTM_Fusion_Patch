@@ -151,38 +151,63 @@ def getisfullblock(elements:list[dict]) -> bool:
         if fr == [ 0, 0, 0 ] and to == [ 16, 16, 16 ]:
             return True
         return False
+    
 def changesixfacetexture(textures:dict,sixfacetexture:list[str]):
     for key,value in textures.items():
         #value有#，而key没有，要加一下
-        if ("#" + key)  in sixfacetexture:
-            index = sixfacetexture.index("#" + key)
-            sixfacetexture[index] = value
+        for i in range(len(sixfacetexture)):
+            if ("#" + key)  == sixfacetexture[i]:
+                sixfacetexture[i] = value
     
-recursioncache = {}#"parent":sixfacetexture
+#会在其他地方用到
+detectresult = {}#"parent":(sixfacetexture,
 
-def getsixfacestexture2(parent:str,blockmodels:dict,sixfacetexture:list[str]) -> tuple[list[str],bool]:
-    """ 递归寻找方块每个面的信息，递归没有优化，将会大量重复执行 """
-    global recursioncache
-    isfullblock = True
-
-    if parent in blockmodels["modelnames"]:
-        index = blockmodels["modelnames"].index(parent)
-        parentmodel = blockmodels["opened"][index]
-    modelinside = parentmodel.get("model")
-    if modelinside:
+def recursivelydetectblock(name:str,blockmodels:dict,sixfacetexture:list[str],isfullblock:bool) -> tuple[list[str],bool,str]:
+    """ 递归寻找方块模型的信息，返回六个面的信息，模型是否是完整方块（从[0,0,0]到[16,16,16])，模型是六个面相同/类似于原木/类似于桶/类似于工作台。 """
+    global detectresult
+    #初始化
+    evaluatedtype = None
+    
+    if name in blockmodels["modelnames"]:
+        index = blockmodels["modelnames"].index(name)
+        currentmodel = blockmodels["opened"][index]
+        modelinside = currentmodel.get("model")
+    else: 
+        raise ValueError(f"{name}不在blockmodels里，可能是因为你没有将对应模组的资源覆盖进入patchpath/assets")
+    if not modelinside:
+        raise ValueError(f'发生了什么？blockmodels["opened"][{index}]缺少打开的模型。')
+    else:
         elements = modelinside.get("elements")
         textures = modelinside.get("textures")
         parent = modelinside.get("parent")
         if parent:
             parent = r.addnamespace(parent)
-            #进行递归
-            sixfacetexture,isfullblock = getsixfacestexture2(parent,blockmodels,sixfacetexture)
+            temp = detectresult.get(parent)
+            if temp:
+                #使用结果
+                sixfacetexture,isfullblock,evaluatedtype = temp
+                #防止修改已经储存的结果
+                sixfacetexture = sixfacetexture.copy()
+            else:
+                #进行递归
+                sixfacetexture,isfullblock,evaluatedtype = recursivelydetectblock(parent,blockmodels,sixfacetexture,isfullblock)
+
+        #这里开始会修改传入的列表，因此返回的时候需要返回备份，防止存储的结果被修改
         if elements:
             isfullblock = getisfullblock(elements)
             sixfacetexture = getsixfacetexture(elements)
-        if textures:    
+            
+        if textures:
+            print(sixfacetexture)
             changesixfacetexture(textures,sixfacetexture)
-    return sixfacetexture,isfullblock
+            print(sixfacetexture)
+            print("\n")
+        if not evaluatedtype:
+            evaluatedtype = evaluatefaces(sixfacetexture)
+        #存储结果
+        detectresult[name] = (sixfacetexture,isfullblock,evaluatedtype)
+    #后面的代码（其实也在前面）会修改传入的列表，返回的时候需要返回备份，防止存储的结果被修改
+    return sixfacetexture.copy(),isfullblock,evaluatedtype
 
 
 
@@ -205,10 +230,10 @@ class blockmodel:
     方块模型文件，会生成能被Fusion识别的形式 xxx.json
     必须提供原始方块模型字典。
     """
-    def __init__(self,reference:dict,layout:str):
+    def __init__(self,name,reference:dict,layout:str):
         #dict 对照用，不要修改这个字典的内容
         self.reference = reference
-
+        self.name = name
         #wiki中一个模型重要的结构成分，有些可以从父模型继承
         #str 父模型的命名空间ID，在知道他它叫命名空间ID之前。我叫它 mcpath
         self.parent = reference.get("parent")
@@ -252,14 +277,9 @@ class blockmodel:
         """ 寻找父模型，获取六个面的信息，并推断自己是什么样的方块。
             六个面的信息也会赋值到另一组属性(self.top2等)
             假如模型会思考.mp3 """
-        #获取六个面
-        if self.elements:
-            sixfacetexture = getsixfacetexture(self.elements)
-        else:
-            sixfacetexture = []
-            sixfacetexture,self.isfullblock = getsixfacestexture2(self.parent,blockmodels,sixfacetexture)
+        sixfacetexture = [self.top,self.bottom,self.north,self.south,self.west,self.east]
+        sixfacetexture,self.isfullblock,self.evaluatedtype = recursivelydetectblock(self.name,blockmodels,sixfacetexture,True)
 
-        self.evaluatedtype = evaluatefaces(sixfacetexture)
         self.top,self.bottom,self.north,self.south,self.west,self.east = sixfacetexture
         #附加内容
         self.top2,self.bottom2,self.north2,self.south2,self.west2,self.east2 = sixfacetexture

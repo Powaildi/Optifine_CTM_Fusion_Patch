@@ -68,9 +68,10 @@ def createfiles(propertyfile:Path,patchpath:Path,blockstates:dict,blockmodels:di
         temp = matchedmodel.get("model")
         #获取打开的模型
         obj = matchedmodel.get("object")
+        name = matchedmodel.get("name")
         if not obj:
             #没有就创建
-            obj = matchedmodel["object"] = c.blockmodel(temp,layout)
+            obj = matchedmodel["object"] = c.blockmodel(name,temp,layout)
         obj.evaluatetype(blockmodels)
 
     #修改模型中的属性
@@ -230,7 +231,7 @@ def run(usetest:bool=False):
     overlaydict["paths"].append(modelpath/"top_only.json")
     overlaydict["models"].append(c.top_only)
 
-    print(c.recursioncache)
+    print(c.detectresult)
 
     #createfiles2(patchpath,patchmodels)
 
