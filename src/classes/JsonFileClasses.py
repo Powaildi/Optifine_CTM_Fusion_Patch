@@ -404,7 +404,7 @@ class blockmodel_overlay:
         只能在初始化的时候给材质。
         只支持connectBlocks。
         使用了convertvariant(...)"""
-    def __init__(self,property:dict,texture:str,layout:str):
+    def __init__(self,property:dict,texture:str,layout:str,elements:list[dict] = None):
         sixfacetexture = gettexturebyproperty(property,"#all")
         self.top,self.bottom,self.north,self.south,self.west,self.east = sixfacetexture
         self.evaluatedtype = evaluatefacesforoverlay(sixfacetexture)
@@ -415,10 +415,10 @@ class blockmodel_overlay:
         self.type = decidefusionmodeltype(layout)
         if layout == "overlay":
             #不完全归纳，会出问题
-            matchblocks = property.get("connectBlocks")
+            matchblocks = property.get("connectBlocks",[])
         else:
             #不完全归纳，会出问题
-            matchblocks = property.get("matchBlocks")
+            matchblocks = property.get("matchBlocks",[])
         #不能完全等同于Fusion里的connections
         self.connections = []
         for matchblock in matchblocks:
@@ -433,7 +433,7 @@ class blockmodel_overlay:
 
         self.textures = {"particle": "#all","all":texture}
         self.parent = None
-        self.elements = None
+        self.elements = elements
     def decideelements(self):
         match self.evaluatedtype:
             case "cube":
@@ -459,16 +459,29 @@ class blockmodel_overlay:
                     self.elements[0]["faces"]["west"] = { "texture": "#all", "cullface": "west" }
                 if self.east:
                     self.elements[0]["faces"]["east"] = { "texture": "#all", "cullface": "east" }
+
     def generatedict(self) -> dict[str,str]:
-        dict1 = {"loader":"fusion:model","type":self.type,"textures":self.textures,"connections":self.connections}
+        dict1 = {"loader":"fusion:model","type":self.type,"textures":self.textures}
+        if self.connections:
+            dict1["connections"] = self.connections
         if self.parent:
             dict1["parent"] = self.parent
         if self.elements:
             dict1["elements"] = self.elements
         return dict1
+#overlay方法特殊的两个模型
+side_only = blockmodel_overlay(
+    {"faces":["sides"]},None,None,
+    [{"from": [ 0, 0, 0 ],"to": [ 16, 16, 16 ],
+      "faces": {"north": { "texture": "#all", "cullface": "north" },
+                "south": { "texture": "#all", "cullface": "south" },
+                "west":  { "texture": "#all", "cullface": "west" },
+                "east":  { "texture": "#all", "cullface": "east" }}}])
 
-
-
+top_only = blockmodel_overlay(
+    {"faces":["top"]},None,None,
+    [{"from": [ 0, 0, 0 ],"to": [ 16, 16, 16 ],
+      "faces": {"up": { "texture": "#all", "cullface": "up" }}}])
 
 class pngmcmeta:
     """ 对缝合到一起的数个贴图的png图片的外部数据文件 xxx.png.mcmeta """

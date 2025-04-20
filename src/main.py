@@ -219,11 +219,25 @@ def run(usetest:bool=False):
     for propertyfile in propertyfiles:
         createfiles(propertyfile,patchpath,blockstates,blockmodels,overlaydict,texturedict)
         
-    for model in overlaydict["models"]:
-        print(model.generatedict())
-        
+    #向模型列表中加入自定义模型
+    modelpath = patchpath / "assets" / "minecraft" / "models" / "overlay"
+    #side_only
+    overlaydict["names"].append("minecraft:overlay/side_only")
+    overlaydict["paths"].append(modelpath/"side_only.json")
+    overlaydict["models"].append(c.side_only)
+    #top_only
+    overlaydict["names"].append("minecraft:overlay/top_only")
+    overlaydict["paths"].append(modelpath/"top_only.json")
+    overlaydict["models"].append(c.top_only)
+
+
 
     #createfiles2(patchpath,patchmodels)
+
+    for model in overlaydict["models"]:
+        #print(model.generatedict())
+        pass
+    
 
 
 
