@@ -402,8 +402,7 @@ class blockmodel:
         
         if thistype == "connecting":
             #比较特殊的点，如果名称有"log“，就会改变内容
-            temp = addconnections(texture,is_same_state="log" in self.name)
-            self.connections[texture] = temp
+            self.connections[texture] = addconnections(is_same_state="log" in self.name)
 
     def modifytexturespecial(self,property:dict,texture:str,layout:str):
         """ modifytexture的特例，可能会存在问题 """
@@ -431,8 +430,7 @@ class blockmodel:
         
         if thistype == "connecting":
             #比较特殊的点，如果名称有"log“，就会改变内容
-            temp = addconnections(texture,is_same_state="log" in self.name)
-            self.connections[texture] = temp
+            self.connections[texture] = addconnections(is_same_state="log" in self.name)
 
 
     def evaluatetargettype(self):
@@ -445,19 +443,6 @@ class blockmodel:
         for a,b in mapping.items():
             for key,value in dict.items():
                 self.textures[key] = b if ("#" + key) == a else value
-
-    def mapconnection(self,mapping:dict):
-        """ 反向的mapping。用于addctmtotexture，配合 can_transform 使用 """
-        copydict = self.connections.copy()
-        for a,b in mapping.items():
-            for key in copydict.keys():
-                if key == b:
-                    #temp为键的值，用于转移
-                    temp = self.connections[key]
-                    #直接转移的不能用，要特殊处理
-                    temp = temp.get("predicates")
-                    self.connections[a[1:]] = temp
-                    self.connections.pop(key)
 
     def repickparent(self,blockmodels:dict):
         """ 用于addctmtotexture，配合 recursivelydetectblock 使用 """
@@ -500,14 +485,14 @@ class blockmodel:
             self.maptexture(mapping)
             print(self.textures)
             print("\n")
-            self.mapconnection(mapping)
+
         else:
             self.repickparent(blockmodels)
             #重复一遍
             mapping = self.getmapping()
             if mapping:
                 self.maptexture(mapping)
-                self.mapconnection(mapping)
+
             else:
                 raise ValueError(f"{self.name}在添加CTM内容时发生了错误")
             
@@ -616,9 +601,8 @@ def evaluatefacesforoverlay(sixfacetexture:list[str]) -> str:
     
 
 
-def addconnections(texture:str,is_same_state:bool=False,is_face_visible:bool=False,match_block:dict=None) -> dict:
-    """ 为纹理路径临时添加连接方法，需要在后续转化为纹理变量。
-        不能完全归纳所需的情况。 """
+def addconnections(is_same_state:bool=False,is_face_visible:bool=False,match_block:dict=None) -> dict:
+    """ 为纹理路径添加连接方法。不能完全归纳所需的情况。 """
     predicate1 = "is_same_state" if is_same_state else "is_same_block"
     predicate2 = "is_face_visible" if is_face_visible else None
     predicate3 = None
@@ -643,7 +627,7 @@ def addconnections(texture:str,is_same_state:bool=False,is_face_visible:bool=Fal
         else:
             #1
             dict1 = {"type":predicate1}
-    return {"texture":texture,"predicates":dict1}
+    return dict1
 
 def decidemodel():
     pass
@@ -671,8 +655,7 @@ class blockmodel_overlay:
         #不能完全等同于Fusion里的connections
         self.connections = []
         for matchblock in matchblocks:
-            temp = addconnections(texture,is_face_visible=True,match_block=matchblock)
-            self.connections.append(temp.get("predicates"))
+            self.connections.append(addconnections(is_face_visible=True,match_block=matchblock))
         if layout == "overlay":
             pass
         else:
