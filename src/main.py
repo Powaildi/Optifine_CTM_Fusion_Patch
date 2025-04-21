@@ -61,9 +61,12 @@ def createfiles(propertyfile:Path,patchpath:Path,blockstates:dict,blockmodels:di
     
     #生成xxx.png.mcmeta，使用刚刚的layout,width,height
     #对于带有法线和高光贴图的图片，它们是否也需要单独创建一个呢？还没有测试
-    tinting = property.get("tintIndex",-1)
+    tinting = property.get("tintIndex",None)
     #给草染色，但是别的染色类型会被无视
-    tinting = None if tinting == -1 else "biome_grass"
+    if tinting == 0: 
+        tinting = "biome_grass"
+    else:
+        tinting = None
 
     #只写了常见的两个
     rendertype = property.get("layer")
