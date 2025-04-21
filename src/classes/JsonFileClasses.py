@@ -336,9 +336,9 @@ class blockmodel:
         #从xxx.propertied文件中推断出来的类型
         self.targettype = None
 
-        self.evaluatetype(blockmodels)
+        self.evaluatetype(blockmodels,True)
 
-    def evaluatetype(self,blockmodels:dict):
+    def evaluatetype(self,blockmodels:dict,firsttime:bool=False):
         """ 寻找父模型，获取六个面的信息，并推断自己是什么样的方块。
             六个面的信息也会赋值到另一组属性(self.top2等)
             在初始化后立刻执行
@@ -347,6 +347,8 @@ class blockmodel:
         sixfacetexture,self.isfullblock,self.evaluatedtype = recursivelydetectblock(self.name,blockmodels,sixfacetexture,True)
 
         self.top,self.bottom,self.north,self.south,self.west,self.east = sixfacetexture
+        if firsttime:
+            self.top2,self.bottom2,self.north2,self.south2,self.west2,self.east2 = sixfacetexture
         
     def modifytexture(self,property:dict,texture:str,layout:str):
         """ 可以多次执行，效果为覆盖，存在多次执行后依然有值为空的情况
@@ -437,8 +439,9 @@ class blockmodel:
 
     def maptexture(self,mapping:dict):
         """ 用于addctmtotexture，配合 can_transform 使用 """
+        dict = self.textures.copy()
         for a,b in mapping.items():
-            for key,value in self.textures.items():
+            for key,value in dict.items():
                 self.textures[key] = b if ("#" + key) == a else value
 
     def mapconnection(self,mapping:dict):
@@ -449,7 +452,9 @@ class blockmodel:
                 if key == b:
                     #temp为键的值，用于转移
                     temp = self.connections[key]
-                    self.connections[a] = temp
+                    #直接转移的不能用，要特殊处理
+                    temp = temp.get("predicates")
+                    self.connections[a[1:]] = temp
                     self.connections.pop(key)
 
     def repickparent(self,blockmodels:dict):
@@ -489,16 +494,13 @@ class blockmodel:
         
         mapping = self.getmapping()
         if mapping != False:
+            print(self.textures)
             self.maptexture(mapping)
+            print(self.textures)
+            print("\n")
             self.mapconnection(mapping)
         else:
-            print(self.name)
-            print(self.parent)
-            #print(self.top2,self.bottom2,self.north2,self.south2,self.west2,self.east2)
             self.repickparent(blockmodels)
-            print(self.parent)
-            #print(self.top,self.bottom,self.north,self.south,self.west,self.east)
-            #print(self.top2,self.bottom2,self.north2,self.south2,self.west2,self.east2)
             #重复一遍
             mapping = self.getmapping()
             if mapping:
@@ -513,7 +515,7 @@ class blockmodel:
         dict["loader"] = "fusion:model"
         dict["type"] = self.type
         if self.type == "connecting":
-            dict["connection"] = self.connections
+            dict["connections"] = self.connections
         #修改内容
         if self.elements:
             dict["elements"] = self.elements

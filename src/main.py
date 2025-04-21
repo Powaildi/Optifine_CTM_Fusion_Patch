@@ -36,6 +36,12 @@ def createfiles(propertyfile:Path,patchpath:Path,blockstates:dict,blockmodels:di
     #图片
     #生成图片的mcpath
     picmcpath = f.pathtomcpath(propertyfile)
+    #看起来mc不认textures/ctm/...，只能改成textures/block/ctm
+    temp = picmcpath.split(":",1)
+    temp.insert(1,":block/")
+    picmcpath = "".join(temp)
+    del temp
+
     namespace,id = r.seperatenamespace(picmcpath,False)
     picpath = patchpath / "assets" / namespace / "textures" / id
     #id里面有多层，生成的类似于assets\minecraft\textures\ctm\acacia_log\acacia_log，由于最后一个是文件夹，又是无后缀文件名，路径应该退一层
@@ -61,7 +67,8 @@ def createfiles(propertyfile:Path,patchpath:Path,blockstates:dict,blockmodels:di
     picmcmeta = c.pngmcmeta(layout,height,width,tinting)
     mcmetapath = picpath / f"{picname}.png.mcmeta"
     with mcmetapath.open("w") as mcmetafile:
-        mcmetafile.write(json.dumps(picmcmeta.generatedict()))
+        mcmetafile.write(json.dumps(picmcmeta.generatedict(),indent=4))
+        mcmetafile.close()
     
     #打开并初始化匹配到的模型，执行一小部分功能
     for matchedmodel in matchedmodels:
@@ -80,10 +87,10 @@ def createfiles(propertyfile:Path,patchpath:Path,blockstates:dict,blockmodels:di
         obj = c.blockmodel_overlay(property,picmcpath,layout)
         obj.decideelements()
         #给个路径和名字
-        modelpath = patchpath / "assets" / "minecraft" / "models" / "overlay"
+        modelpath = patchpath / "assets" / "minecraft" / "models" / "block" / "overlay"
         modelpath.mkdir(parents=True,exist_ok=True)
         modelpath = modelpath / f"{picname}.json"
-        modelname = f"minecraft:overlay/{picname}"
+        modelname = f"minecraft:block/overlay/{picname}"
         #塞进overlaydict
         overlaydict["names"].append(modelname)
         overlaydict["paths"].append(modelpath)
@@ -94,7 +101,7 @@ def createfiles(propertyfile:Path,patchpath:Path,blockstates:dict,blockmodels:di
         modifierpath.mkdir(parents=True,exist_ok=True)
         modifierfilepath = modifierpath / f"{picname}.json"
         with modifierfilepath.open("w") as modifierfile:
-            modifierfile.write(json.dumps(modifier.generatedict()))
+            modifierfile.write(json.dumps(modifier.generatedict(),indent=4))
             modifierfile.close()
 
     #一般方法
@@ -173,14 +180,14 @@ def createfiles2(patchpath:Path,blockmodels:dict,overlaydict:dict):
         modelpath = patchpath / "assets" / namespace / "models" / f"{id}.json"
         modelpath.parent.mkdir(parents=True,exist_ok=True)
         with modelpath.open("w") as modelfile:
-            modelfile.write(json.dumps(obj.generatedict()))
+            modelfile.write(json.dumps(obj.generatedict(),indent=4))
             modelfile.close()
     #overlay
     models = overlaydict.get("models")
     paths = overlaydict.get("paths")
     for obj,path in zip(models,paths):
         with path.open("w") as modelfile:
-            modelfile.write(json.dumps(obj.generatedict()))
+            modelfile.write(json.dumps(obj.generatedict(),indent=4))
             modelfile.close()
 
 
@@ -217,7 +224,7 @@ def run(usetest:bool=False):
     text = open(originalpath / "pack.mcmeta","r").read()
     pack = json.loads(text)
     packmcmeta = c.packmcmeta(pack["pack"]["pack_format"],"1.2.2",originalpath.name)
-    open(patchpath / "pack.mcmeta","w").write(json.dumps(packmcmeta.generatedict()))
+    open(patchpath / "pack.mcmeta","w").write(json.dumps(packmcmeta.generatedict(),indent=4))
     del text,pack,packmcmeta
     
     #收集文件路径，为后续模型提呈做准备
@@ -238,7 +245,7 @@ def run(usetest:bool=False):
         createfiles(propertyfile,patchpath,blockstates,blockmodels,overlaydict,texturedict)
         
     #向模型列表中加入自定义模型
-    modelpath = patchpath / "assets" / "minecraft" / "models" / "overlay"
+    modelpath = patchpath / "assets" / "minecraft" / "models" / "block" / "overlay"
     #side_only
     overlaydict["names"].append("minecraft:overlay/side_only")
     overlaydict["paths"].append(modelpath/"side_only.json")
