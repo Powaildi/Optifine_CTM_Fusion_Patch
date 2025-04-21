@@ -71,8 +71,7 @@ def createfiles(propertyfile:Path,patchpath:Path,blockstates:dict,blockmodels:di
         name = matchedmodel.get("name")
         if not obj:
             #没有就创建
-            obj = matchedmodel["object"] = c.blockmodel(name,temp,layout)
-        obj.evaluatetype(blockmodels)
+            obj = matchedmodel["object"] = c.blockmodel(name,temp,layout,blockmodels)
 
     #修改模型中的属性
     #overlay方法有着完全不同的做法
@@ -103,7 +102,7 @@ def createfiles(propertyfile:Path,patchpath:Path,blockstates:dict,blockmodels:di
         for matchedmodel in matchedmodels:
             temp = matchedmodel.get("model")
             obj = matchedmodel.get("object")
-            obj.modifytexture(property,picmcpath)
+            obj.modifytexture(property,picmcpath,layout)
         #print(obj.__dict__)
 
     """  

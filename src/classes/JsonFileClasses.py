@@ -293,8 +293,8 @@ class blockmodel:
     方块模型文件，会生成能被Fusion识别的形式 xxx.json
     必须提供原始方块模型字典。
     """
-    def __init__(self,name,reference:dict,layout:str):
-        #dict 对照用，不要修改这个字典的内容
+    def __init__(self,name,reference:dict,layout:str,blockmodels:dict):
+        #dict 对照用，不要修改这个字典的内容，但是似乎在后面已经修改了
         self.reference = reference
         self.name = name
         #wiki中一个模型重要的结构成分，有些可以从父模型继承
@@ -308,8 +308,10 @@ class blockmodel:
         self.elements = reference.get("elements")
         #dict （默认所有显示模式无变换）模型在不同显示模式下的渲染变换。
         self.display = reference.get("display")
-        #str fusion识别的模型的一个属性
+        #str fusion识别的模型的一个属性，需要多次改变
         self.type = decidefusionmodeltype(layout)
+        #dict type == connecting 时特有的部分
+        self.connections = {}
 
 
         #自定义内容
@@ -336,9 +338,13 @@ class blockmodel:
         self.east2 = None
         #从xxx.propertied文件中推断出来的类型
         self.targettype = None
+
+        self.evaluatedtype(blockmodels)
+
     def evaluatetype(self,blockmodels:dict):
         """ 寻找父模型，获取六个面的信息，并推断自己是什么样的方块。
             六个面的信息也会赋值到另一组属性(self.top2等)
+            在初始化后立刻执行
             假如模型会思考.mp3 """
         sixfacetexture = [self.top,self.bottom,self.north,self.south,self.west,self.east]
         sixfacetexture,self.isfullblock,self.evaluatedtype = recursivelydetectblock(self.name,blockmodels,sixfacetexture,True)
@@ -347,7 +353,7 @@ class blockmodel:
         #附加内容
         self.top2,self.bottom2,self.north2,self.south2,self.west2,self.east2 = sixfacetexture
         
-    def modifytexture(self,property:dict,texture:str):
+    def modifytexture(self,property:dict,texture:str,layout:str):
         """ 可以多次执行，效果为覆盖，存在多次执行后依然有值为空的情况 """
         faces = property.get("faces")
         if faces:
@@ -385,6 +391,16 @@ class blockmodel:
             self.south2 = texture
             self.west2 = texture
             self.east2 = texture
+        
+        #fusion的部分
+        thistype = decidefusionmodeltype(layout)
+        self.type = thistype if self.type == "base" else "connecting"
+        
+        if thistype == "connecting":
+            #比较特殊的点，如果名称有"log“，就会改变内容
+            temp = addconnections(texture,is_same_state="log" in self.name)
+            self.connections[texture] = temp
+
 
     def evaluatetargettype(self):
         """ 在所有贴图都处理完之后再用 """
@@ -395,6 +411,16 @@ class blockmodel:
         for a,b in mapping.items():
             for key,value in self.textures.items():
                 self.textures[key] = b if ("#" + key) == a else value
+
+    def mapconnection(self,mapping:dict):
+        """ 反向的mapping。用于addctmtotexture，配合 can_transform 使用 """
+        for a,b in mapping.items():
+            for key in self.connections.keys():
+                if key == b:
+                    #temp为键的值，用于转移
+                    temp = self.connections[key]
+                    self.connections[a] = temp
+                    self.connections.pop(key)
 
     def repickparent(self,blockmodels:dict):
         """ 用于addctmtotexture，配合 recursivelydetectblock 使用 """
@@ -410,7 +436,7 @@ class blockmodel:
                     self.parent = "minecraft:block/cube_column"
                 case "cube":
                     self.parent = "minecraft:block/cube_all"
-                    raise ValueError(f"{self}不应该在换父模型时到达这个分支，应该是can_transform(a, b)、addctmtotexture的问题")
+                    raise ValueError(f"{self.name}不应该在换父模型时到达这个分支，应该是can_transform(a, b)、addctmtotexture的问题")
             self.evaluatetype(blockmodels)
         else:
             #获取带有元素的爹并直接修改元素内容
@@ -422,11 +448,32 @@ class blockmodel:
         mapping = can_transform([self.top,self.bottom,self.north,self.south,self.west,self.east],[self.top2,self.bottom2,self.north2,self.south2,self.west2,self.east2])
         if mapping:
             self.maptexture(mapping)
+            self.mapconnection(mapping)
         else:
             self.repickparent(blockmodels)
+            #重复一遍
+            if mapping:
+                self.maptexture(mapping)
+                self.mapconnection(mapping)
+            else:
+                raise ValueError(f"{self.name}在添加CTM内容时发生了错误")
             
     def generatedict(self):
-        pass
+        dict = self.reference.copy()
+        #加入Fusion识别的内容
+        dict["loader"] = "fusion:model"
+        dict["type"] = self.type
+        if self.type == "connecting":
+            dict["connection"] = self.connections
+        #修改内容
+        if self.elements:
+            dict["elements"] = self.elements
+        if self.parent:
+            dict["parent"] = self.parent
+        if self.textures:
+            dict["textures"] = self.textures
+        
+        return dict
 
     
     
