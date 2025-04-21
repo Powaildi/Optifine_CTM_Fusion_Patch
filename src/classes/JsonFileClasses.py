@@ -241,6 +241,8 @@ def getelemnts(parent:str,blockmodels:dict):
 
     
 
+
+
 def can_transform(a, b) -> dict | bool:
     """ 生成从a到b的映射字典，如果不能就返回False
         非常好deepseek，爱来自抛瓦 """
@@ -524,9 +526,14 @@ class blockmodel:
         if self.textures:
             dict["textures"] = self.textures
         
-        return dict
+        return sortdictkeys(dict)
 
-    
+def sortdictkeys(input:dict):
+    order = ["loader","type","connections","parent","textures","elements"]
+    priority = {key:idx for idx,key in enumerate(order)}
+    sorted_items = sorted(input.items(),key=lambda x:priority.get(x[0],len(order)))
+
+    return dict(sorted_items)
     
         
 
@@ -710,7 +717,7 @@ class blockmodel_overlay:
             dict1["parent"] = self.parent
         if self.elements:
             dict1["elements"] = self.elements
-        return dict1
+        return sortdictkeys(dict1)
 #overlay方法特殊的两个模型
 side_only = blockmodel_overlay(
     {"faces":["sides"]},None,None,
