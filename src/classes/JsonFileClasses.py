@@ -211,8 +211,6 @@ def recursivelydetectblock(name:str,blockmodels:dict,sixfacetexture:list[str],is
     #后面的代码（其实也在前面）会修改传入的列表，返回的时候需要返回备份，防止存储的结果被修改
     return sixfacetexture.copy(),isfullblock,evaluatedtype
 
-
-
 def evaluatefaces(sixfacetexture:list[str]) -> str:
     """ 返回的名称只是方便识记，可以是任何东西，但是要和后面的代码对接 """
     top,bottom,north,south,west,east = sixfacetexture
@@ -227,6 +225,25 @@ def evaluatefaces(sixfacetexture:list[str]) -> str:
     else:
         return "irregular"
  
+def getelemnts(parent:str,blockmodels:dict):
+    """ 获取带有elements的模型，然后将它的父模型和elements返回。 """
+    parent1 = r.addnamespace(parent)
+    if parent1 in blockmodels["modelnames"]:
+        index = blockmodels["modelnames"].index(parent1)
+        currentmodel = blockmodels["opened"][index]
+        modelinside = currentmodel.get("model")
+    if not modelinside:
+        raise ValueError(f'发生了什么？blockmodels["opened"][{index}]缺少打开的模型。')
+    else:
+        elements = modelinside.get("elements")
+        parent2 = modelinside.get("parent")
+        if elements:
+            return parent2,elements
+        else:
+            return getelemnts(parent2,blockmodels)
+
+    
+
 def can_transform(a, b) -> dict | bool:
     """ 生成从a到b的映射字典，如果不能就返回False
         非常好deepseek，爱来自抛瓦 """
@@ -268,6 +285,7 @@ def can_transform(a, b) -> dict | bool:
             if has_cycle(node):
                 return False
     return mapping
+
 
 
 class blockmodel:
@@ -368,35 +386,51 @@ class blockmodel:
             self.west2 = texture
             self.east2 = texture
 
+    def evaluatetargettype(self):
+        """ 在所有贴图都处理完之后再用 """
+        self.targettype = evaluatefaces([self.top2,self.bottom2,self.north2,self.south2,self.west2,self.east2])
+
     def maptexture(self,mapping:dict):
-        """ 配合 can_transform 使用 """
+        """ 用于addctmtotexture，配合 can_transform 使用 """
         for a,b in mapping.items():
             for key,value in self.textures.items():
                 self.textures[key] = b if ("#" + key) == a else value
 
-    def addctmtotexture(self):
+    def repickparent(self,blockmodels:dict):
+        """ 用于addctmtotexture，配合 recursivelydetectblock 使用 """
+        global detectresult
+        if self.isfullblock:
+            #寻找特定几个类型，会导致uv_locked的模型失去这一特征
+            match self.targettype:
+                case "irregular":
+                    self.parent = "minecraft:block/cube"
+                case "barrel":
+                    self.parent = "minecraft:block/cube_bottom_top"
+                case "log":
+                    self.parent = "minecraft:block/cube_column"
+                case "cube":
+                    self.parent = "minecraft:block/cube_all"
+                    raise ValueError(f"{self}不应该在换父模型时到达这个分支，应该是can_transform(a, b)、addctmtotexture的问题")
+            self.evaluatetype(blockmodels)
+        else:
+            #获取带有元素的爹并直接修改元素内容
+            self.parent,self.elements = getelemnts(self.parent,blockmodels)
+            self.evaluatetype(blockmodels)
+        
+    def addctmtotexture(self,blockmodels:dict):
         """ 在所有贴图都处理完之后再用 """
         mapping = can_transform([self.top,self.bottom,self.north,self.south,self.west,self.east],[self.top2,self.bottom2,self.north2,self.south2,self.west2,self.east2])
         if mapping:
-            self.maptexture()
-    def evaluatetargettype(self):
-        """ 在所有贴图都处理完之后再用 """
-        self.targettype = evaluatefaces([self.top2,self.bottom2,self.north2,self.south2,self.west2,self.east2])
-        
-        if self.targettype == self.evaluatetargettype:
-            pass
+            self.maptexture(mapping)
         else:
-            if self.isfullblock:
-                match [self.evaluatedtype,self.targettype]:
-                    case ["cube","log"]:
-                        pass
-                    case ["cube","barrel"]:
-                        pass
-                    case ["log","barrel"]:
-                        pass
-            else:
-                
-                pass
+            self.repickparent(blockmodels)
+            
+    def generatedict(self):
+        pass
+
+    
+    
+        
 
 
 
