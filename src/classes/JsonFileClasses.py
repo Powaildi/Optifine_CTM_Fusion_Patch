@@ -663,7 +663,9 @@ class blockmodel_overlay:
             pass
 
 
-        self.textures = {"particle": "#all","all":texture}
+        self.textures = {"particle": "#all"}
+        if texture:
+            self.textures["all"] = texture
         self.parent = None
         self.elements = elements
     def decideelements(self):
@@ -778,12 +780,13 @@ def convertvariant(matchblock:dict) -> str | dict:
 
 class blockmodifier:
     """ 生成Fusion专属的Block modifier，用于Overlay。位于 assets/minecraft/fusion/model_modifiers/blocks """
-    def __init__(self,property:dict,append:str):
+    def __init__(self,property:dict,append:str,blockstates:dict):
         """ 目前只支持matchBlocks """
         self.targets = []
         if property.get("matchBlocks"):
             for match in property.get("matchBlocks"):
-                self.targets.append(convertvariant(match))
+                if match.get("name") in blockstates["blocknames"]:
+                    self.targets.append(convertvariant(match))
 
         self.append = [append]
 

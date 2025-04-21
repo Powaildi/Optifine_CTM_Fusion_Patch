@@ -101,7 +101,7 @@ def createfiles(propertyfile:Path,patchpath:Path,blockstates:dict,blockmodels:di
         overlaydict["paths"].append(modelpath)
         overlaydict["models"].append(obj)
         #创建Fusion block modifier
-        modifier = c.blockmodifier(property,modelname)
+        modifier = c.blockmodifier(property,modelname,blockstates)
         modifierpath = patchpath / "assets" / "minecraft" / "fusion" / "model_modifiers" / "blocks"
         modifierpath.mkdir(parents=True,exist_ok=True)
         modifierfilepath = modifierpath / f"{picname}.json"
