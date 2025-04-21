@@ -720,7 +720,7 @@ top_only = blockmodel_overlay(
 
 class pngmcmeta:
     """ 对缝合到一起的数个贴图的png图片的外部数据文件 xxx.png.mcmeta """
-    def __init__(self,layout:str="full",rows:int=1,columns:int=1,tinting:str=None):
+    def __init__(self,layout:str="full",rows:int=1,columns:int=1,rendertype:str=None,tinting:str=None):
         #这里和CreateStitchedTexture的126行左右位置有关系
         if layout == "continuous":
             self.type = "continuous"
@@ -734,6 +734,7 @@ class pngmcmeta:
         self.rows = rows
         self.columns = columns
         self.tinting = tinting
+        self.render_type = rendertype 
     def generatedict(self) -> dict[str,str]:
         dict = {"fusion":{"type":self.type}}
         #以下列出了所有可能的”type“的值。
@@ -754,7 +755,9 @@ class pngmcmeta:
         
         if self.tinting:
             dict["fusion"]["tinting"] = self.tinting
-        
+        if self.render_type:
+            dict["fusion"]["render_type"] =self.render_type
+
         return dict
         
 

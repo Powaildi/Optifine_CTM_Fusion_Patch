@@ -64,7 +64,12 @@ def createfiles(propertyfile:Path,patchpath:Path,blockstates:dict,blockmodels:di
     tinting = property.get("tintIndex",-1)
     #给草染色，但是别的染色类型会被无视
     tinting = None if tinting == -1 else "biome_grass"
-    picmcmeta = c.pngmcmeta(layout,height,width,tinting)
+
+    #只写了常见的两个
+    rendertype = property.get("layer")
+    rendertype = "translucent" if rendertype == "translucent" else "cutout"
+
+    picmcmeta = c.pngmcmeta(layout,height,width,rendertype,tinting)
     mcmetapath = picpath / f"{picname}.png.mcmeta"
     with mcmetapath.open("w") as mcmetafile:
         mcmetafile.write(json.dumps(picmcmeta.generatedict(),indent=4))
