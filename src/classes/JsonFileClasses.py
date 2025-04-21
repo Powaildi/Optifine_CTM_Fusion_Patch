@@ -198,10 +198,7 @@ def recursivelydetectblock(name:str,blockmodels:dict,sixfacetexture:list[str],is
             sixfacetexture = getsixfacetexture(elements)
             
         if changebytexture and textures:
-            print(sixfacetexture)
             changesixfacetexture(textures,sixfacetexture)
-            print(sixfacetexture)
-            print("\n")
 
         evaluatedtype = evaluatefaces(sixfacetexture)
         #存储结果
@@ -339,7 +336,7 @@ class blockmodel:
         #从xxx.propertied文件中推断出来的类型
         self.targettype = None
 
-        self.evaluatedtype(blockmodels)
+        self.evaluatetype(blockmodels)
 
     def evaluatetype(self,blockmodels:dict):
         """ 寻找父模型，获取六个面的信息，并推断自己是什么样的方块。
@@ -350,11 +347,14 @@ class blockmodel:
         sixfacetexture,self.isfullblock,self.evaluatedtype = recursivelydetectblock(self.name,blockmodels,sixfacetexture,True)
 
         self.top,self.bottom,self.north,self.south,self.west,self.east = sixfacetexture
-        #附加内容
-        self.top2,self.bottom2,self.north2,self.south2,self.west2,self.east2 = sixfacetexture
         
     def modifytexture(self,property:dict,texture:str,layout:str):
-        """ 可以多次执行，效果为覆盖，存在多次执行后依然有值为空的情况 """
+        """ 可以多次执行，效果为覆盖，存在多次执行后依然有值为空的情况
+            mojang 给樱花木标新立异使用了uv_locked，需要特别处理
+            玻璃板同样需要特别处理 """
+        if "uv_locked" in self.parent or "pane" in self.name:
+            self.modifytexturespecial(property,texture,layout)
+            return
         faces = property.get("faces")
         if faces:
             for face in faces:
@@ -391,7 +391,36 @@ class blockmodel:
             self.south2 = texture
             self.west2 = texture
             self.east2 = texture
+
+        #fusion的部分
+        thistype = decidefusionmodeltype(layout)
+        self.type = thistype if self.type == "base" else "connecting"
         
+        if thistype == "connecting":
+            #比较特殊的点，如果名称有"log“，就会改变内容
+            temp = addconnections(texture,is_same_state="log" in self.name)
+            self.connections[texture] = temp
+
+    def modifytexturespecial(self,property:dict,texture:str,layout:str):
+        """ modifytexture的特例，可能会存在问题 """
+        list2 = [self.top2,self.bottom2,self.north2,self.south2,self.west2,self.east2]
+        faces = property.get("faces")
+        if faces:
+            for face in faces:
+                match face:
+                    case "sides":
+                        for i in range(len(list2)):
+                            list2[i] = texture if list2[i] == "#side" else list2[i]
+                    case "top":
+                        for i in range(len(list2)):
+                            list2[i] = texture if list2[i] == "#end" or list2[i] == "#edge" else list2[i]
+                    case "bottom":
+                        for i in range(len(list2)):
+                            list2[i] = texture if list2[i] == "#end" or list2[i] == "#edge" else list2[i]
+        else:
+            for i in range(len(list2)):
+                list2[i] = texture
+
         #fusion的部分
         thistype = decidefusionmodeltype(layout)
         self.type = thistype if self.type == "base" else "connecting"
@@ -414,8 +443,9 @@ class blockmodel:
 
     def mapconnection(self,mapping:dict):
         """ 反向的mapping。用于addctmtotexture，配合 can_transform 使用 """
+        copydict = self.connections.copy()
         for a,b in mapping.items():
-            for key in self.connections.keys():
+            for key in copydict.keys():
                 if key == b:
                     #temp为键的值，用于转移
                     temp = self.connections[key]
@@ -442,16 +472,35 @@ class blockmodel:
             #获取带有元素的爹并直接修改元素内容
             self.parent,self.elements = getelemnts(self.parent,blockmodels)
             self.evaluatetype(blockmodels)
-        
+    
+    def getmapping(self):
+        list1 = [self.top,self.bottom,self.north,self.south,self.west,self.east]
+        list2 = [self.top2,self.bottom2,self.north2,self.south2,self.west2,self.east2]
+        #去掉不渲染的面
+        for i in list(range(len(list1)))[::-1]:
+            if list1[i] == None:
+                list1.pop(i)
+                list2.pop(i)
+        print(list1,list2,sep="///")
+        return can_transform(list1,list2)
+
     def addctmtotexture(self,blockmodels:dict):
         """ 在所有贴图都处理完之后再用 """
-        mapping = can_transform([self.top,self.bottom,self.north,self.south,self.west,self.east],[self.top2,self.bottom2,self.north2,self.south2,self.west2,self.east2])
-        if mapping:
+        
+        mapping = self.getmapping()
+        if mapping != False:
             self.maptexture(mapping)
             self.mapconnection(mapping)
         else:
+            print(self.name)
+            print(self.parent)
+            #print(self.top2,self.bottom2,self.north2,self.south2,self.west2,self.east2)
             self.repickparent(blockmodels)
+            print(self.parent)
+            #print(self.top,self.bottom,self.north,self.south,self.west,self.east)
+            #print(self.top2,self.bottom2,self.north2,self.south2,self.west2,self.east2)
             #重复一遍
+            mapping = self.getmapping()
             if mapping:
                 self.maptexture(mapping)
                 self.mapconnection(mapping)

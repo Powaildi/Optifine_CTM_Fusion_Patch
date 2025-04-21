@@ -421,8 +421,6 @@ def matchblockandtiles(property:dict,blockstates:dict,blockmodels:dict,texturedi
             matchblocks(match,blockstates,matchednames)
             #去除重复元素
             matchednames = removeduplications(matchednames)
-        if not matchednames:
-            print(match)
         for name in matchednames:
             #补充命名空间
             name = addnamespace(name)

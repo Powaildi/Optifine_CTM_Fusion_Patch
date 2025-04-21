@@ -156,18 +156,36 @@ def createfiles(propertyfile:Path,patchpath:Path,blockstates:dict,blockmodels:di
                     pass
     """
 
-def createfiles2(patchpath:Path,patchmodels:dict):
-    allpatchblocks = patchmodels.get("names")
-    allpatchmodels = patchmodels.get("models")
+def createfiles2(patchpath:Path,blockmodels:dict,overlaydict:dict):
+    """ 核心组件的集合体，生成所有的方块模型。 """
+    #blockmodels
+    models = blockmodels.get("opened")
+    for model in models:
+        modelname = model.get("name")
+        obj = model.get("object")
+        if not obj:
+            continue
+        else:
+            obj.evaluatetargettype()
+            obj.addctmtotexture(blockmodels)
 
-    for i in range(len(allpatchblocks)):
-        namespace,id = r.seperatenamespace(allpatchblocks[i],False)
-        filepath = patchpath / "assets" / namespace / "models" / "block" / f"{id}.json"
-        
-        model = allpatchmodels[i]
-        text = json.dumps(model.generatedict())
-        with filepath.open("w") as f:
-            f.write(text)
+        namespace,id = r.seperatenamespace(modelname,False)
+        modelpath = patchpath / "assets" / namespace / "models" / f"{id}.json"
+        modelpath.parent.mkdir(parents=True,exist_ok=True)
+        with modelpath.open("w") as modelfile:
+            modelfile.write(json.dumps(obj.generatedict()))
+            modelfile.close()
+    #overlay
+    models = overlaydict.get("models")
+    paths = overlaydict.get("paths")
+    for obj,path in zip(models,paths):
+        with path.open("w") as modelfile:
+            modelfile.write(json.dumps(obj.generatedict()))
+            modelfile.close()
+
+
+
+
 
 
 @d.evaluatetime
@@ -230,13 +248,8 @@ def run(usetest:bool=False):
     overlaydict["paths"].append(modelpath/"top_only.json")
     overlaydict["models"].append(c.top_only)
 
-    print(c.detectresult)
+    createfiles2(patchpath,blockmodels,overlaydict)
 
-    #createfiles2(patchpath,patchmodels)
-
-    for model in overlaydict["models"]:
-        #print(model.generatedict())
-        pass
     
 
 

@@ -44,9 +44,9 @@ def maplist(mapping:dict,list:list):
             list[i] = b if list[i] == a else list
 
 if __name__ == "__main__":
-    a = [1,1,3,5,3,3]
-    b = [2,2,1,1,1,1]
+    a = [2,2,1,1,1,1]
+    b = [2,2,1,1,4,1]
     mapping = can_transform(a,b)
     if mapping:
         maplist(mapping,a)
-    print(a)
+    print(mapping != False)
